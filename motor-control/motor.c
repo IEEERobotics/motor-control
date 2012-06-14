@@ -8,11 +8,31 @@
  * Functions to control the motors, including controlling the power delivered (PWM
  * duty cycle) and initializing peripheral registers.
  *
+ * @section Motor Structures
+ *
+ * The state of a motor in software is described using these three structs:
+ * <b>motor_reg_t:</b> Contains pointers that point directly to hardware registers.
+ * These registers are used to set the PWM duty cycle and read the period of the
+ * motor's quadrature encoder. These registers are the lowest level of control available
+ * in software, and should only be written to through update_speed().
+ *
+ * <b>motor_response_t:</b> This struct defines the PWM duty cycle (or, average power)
+ * delivered to the motor, and the direction of rotation. The update_speed() function
+ * reads the values in this struct, and writes to the special function registers pointed
+ * to by the motor_reg_t.
+ *
+ * <b>controller_t:</b> This struct contains the internal state of a PID controller. More
+ * information on the software PID controller is (will be) in pid.c
+ *
+ * By instantiating each of these structs, one motor can be represented in software.
+ * Instead of manually keeping up with three separate struct instances for each of the four
+ * motors, a "super struct", motor_t, is used as a container. Most of these functions
+ * simply accept a motor_t as an argument.
+ *
  */
 
 #include <avr/io.h>
 #include "motor.h"
-#include "error.h"
 
 /**
  * Initializes a PWM timer
@@ -119,20 +139,6 @@ void init_motor(motor_t *motor)
 
 
 /**
- * Change the PID setpoint of a motor_t
- *
- * @param motor Pointer to the motor_t struct
- * @param sp The new setpoint
- *
- * @todo Implement this function.
- */
-void change_setpoint(motor_t *motor, int sp)
-{
-	// Just a stub
-}
-
-
-/**
  * Change the direction of a motor
  *
  * The change in direction doesn't take place until update_speed() is called.
@@ -155,7 +161,7 @@ void change_direction(motor_t *motor, direction_t dir)
  *
  * @param motor Motor to update
  *
- * @todo Implement this function.
+ * @todo Impl09ement this function.
  */
 void update_speed(motor_t *motor)
 {

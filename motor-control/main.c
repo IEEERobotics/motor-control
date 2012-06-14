@@ -9,9 +9,9 @@
  *
  */
 
-#include <avr/io.h>
 #include "motor.h"
 #include "pid.h"
+#include <avr/io.h>
 
 motor_t motor_a, motor_b, motor_c, motor_d;
 

@@ -13,6 +13,7 @@
 #ifndef MOTOR_H_
 #define MOTOR_H_
 
+#include <avr/io.h>
 #include "pid.h"
 
 #define PWM_PERIOD 10000
@@ -87,7 +88,7 @@ typedef struct motor {
 
 void init_motor(motor_t *motor);
 void init_pwm_timer(TC0_t *timer);
-void init_enc_timer(TC1_t *timer);
+void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel);
 void init_enc_port(PORT_t *port);
 void change_setpoint(motor_t *motor, int sp);
 void change_direction(motor_t *motor, direction_t dir);

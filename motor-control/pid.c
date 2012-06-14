@@ -51,3 +51,17 @@ void init_controller(controller_t *controller)
 {
 	// Just a stub
 }
+
+
+/**
+ * Change the PID setpoint of a motor_t
+ *
+ * @param motor Pointer to the motor_t struct
+ * @param sp The new setpoint
+ *
+ * @todo Implement this function.
+ */
+void change_setpoint(motor_t *motor, int sp)
+{
+	// Just a stub
+}
