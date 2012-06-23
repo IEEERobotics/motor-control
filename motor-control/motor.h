@@ -42,9 +42,8 @@ typedef unsigned short int speed_t;
  */
 typedef enum direction {
   DIR_FORWARD,
-  DIR_BACKWARD,
-  DIR_BRAKE_H,
-  DIR_BRAKE_L
+  DIR_REVERSE,
+  DIR_BRAKE
 } direction_t;
 
 

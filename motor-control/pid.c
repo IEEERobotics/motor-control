@@ -11,6 +11,8 @@
 
 #include "motor.h"
 
+#define LIMIT(x, min, max)	((x) < (min)) ? (min) : (((x) > (max)) ? (max) : (x))
+
 /**
  * Updates the motor response using a PID algorithm
  *
