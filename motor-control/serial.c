@@ -7,8 +7,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "serial.h"
-#include "motor.h"
+
 
 #define TOKEN_A			0
 #define TOKEN_B			1
@@ -311,4 +312,27 @@ void run_command(command_t *c)
 		bfr_putln(&write_buffer, error_bad_command, 1);
 		break;
 	}
+}
+
+
+test_serial()
+{
+	void print_buffer(volatile buffer_t *buf)
+	{
+		int i;
+		char c;
+
+		for(i=0; (i % buf->size) != buf->tail; i++)
+		{
+			c = buf->bfr[(head+i) % buf->size];
+			if(! isprint(c))
+				printf("%x ", c);	// Print as a hex value
+			else
+				printf("%c ", c);	// Print as a character
+		}
+		printf("(%n bytes)\n", i);
+	}
+
+	init_serial();
+	bfr_putln(&read_buffer, "run A 100");
 }

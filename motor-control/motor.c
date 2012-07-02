@@ -161,7 +161,7 @@ void change_direction(motor_t *motor, direction_t dir)
  *
  * @param motor Motor to update
  *
- * @todo Impl09ement this function.
+ * @todo Implement this function.
  */
 void update_speed(motor_t *motor)
 {

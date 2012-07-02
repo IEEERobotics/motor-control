@@ -8,6 +8,8 @@
 #ifndef SERIAL_H_
 #define SERIAL_H_
 
+#define SERIAL_UNITTEST_ENABLE
+
 #define BUFSIZE 64			// Must be a power of 2
 //#define USE_UNIX_NEWLINES		// Uncomment to use UNIX line endings
 
@@ -38,6 +40,17 @@ typedef struct command {
 	int token1;
 	int setpoint;
 } command_t;
+
+
+void init_serial();
+int bfr_readln(volatile buffer_t *buffer, char *line, int size);
+void bfr_putln(volatile buffer_t *buffer, const char *line, int print_prompt);
+void parse_line(command_t *c);
+void run_command(command_t *c);
+
+#ifdef SERIAL_UNITTEST_ENABLE
+void test_serial();
+#endif
 
 
 #endif /* SERIAL_H_ */
