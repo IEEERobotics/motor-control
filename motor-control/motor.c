@@ -98,7 +98,7 @@ void init_enc_port(PORT_t *port)
 
 
 /**
- * Initializes a motor_respobse_t struct
+ * Initializes a motor_response_t struct
  *
  * @param resp Pointer to the motor_response_t struct to initialize
  *
@@ -106,7 +106,8 @@ void init_enc_port(PORT_t *port)
  */
 void init_motor_response(motor_response_t *resp)
 {
-	// Just a stub
+	resp->dir = DIR_BRAKE;
+	resp->pwm = 0;
 }
 
 
@@ -135,6 +136,7 @@ void init_motor(motor_t *motor)
 	init_motor_reg(&(motor->reg));
 	init_motor_response(&(motor->response));
 	init_controller(&(motor->controller));
+	motor->sample_counter = 0;
 }
 
 
@@ -150,7 +152,7 @@ void init_motor(motor_t *motor)
  */
 void change_direction(motor_t *motor, direction_t dir)
 {
-	// Just a stub
+	motor->response.dir = dir;
 }
 
 

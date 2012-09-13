@@ -18,17 +18,14 @@
 
 #define PWM_PERIOD 10000
 
-#define PWM_TIMER0 TCC0
-#define PWM_TIMER1 TCD0
-#define ENC_TIMER0 TCC1
-#define ENC_TIMER1 TCD1
-#define ENC_TIMER2 TCE1
-#define ENC_TIMER3 TCF1
-#define MS_TIMER   TCE0
-
-
-typedef short int pwm_t;
-typedef unsigned short int speed_t;
+#define PWM_TIMER0  TCC0
+#define PWM_TIMER1  TCD0
+#define ENC_TIMER0  TCC1
+#define ENC_TIMER1  TCD1
+#define ENC_TIMER2  TCE1
+#define ENC_TIMER3  TCF1
+#define MS_TIMER    TCE0
+#define NUM_SAMPLES 256
 
 
 /**
@@ -69,8 +66,14 @@ typedef struct motor_reg {
  */
 typedef struct motor_response {
 	direction_t dir;
-	short int pwm;
+	int pwm;
 } motor_response_t;
+
+
+typedef struct sample {
+	short int pwm;
+	short int enc;
+} sample_t;
 
 
 /**
@@ -82,6 +85,8 @@ typedef struct motor {
 	motor_reg_t reg;
 	motor_response_t response;
 	controller_t controller;
+	sample_t samples[NUM_SAMPLES];
+	short int sample_counter;
 } motor_t;
 
 

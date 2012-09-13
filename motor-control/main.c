@@ -12,8 +12,7 @@
 #include <avr/io.h>
 #include "motor.h"
 #include "pid.h"
-
-#define UNIT_TEST
+#include "serial.h"
 
 motor_t motor_a, motor_b, motor_c, motor_d;
 
@@ -23,22 +22,18 @@ motor_t motor_a, motor_b, motor_c, motor_d;
  *
  * @todo Implement me!
  */
-#ifndef UNIT_TEST
 int main()
 {
-	// Just a stub
+	init_serial();
+
+	PORTE.DIRSET = 0xff;
+	PORTE.OUT = 0xaa;
+
+	test_serial_out();
 
 	/* Make sure control never reaches the end of main() */
 	for(;;)
 	{
 		__asm__ __volatile("nop");
 	}
-}
-
-#else
-/* This main() is used to execute unit tests */
-int main(int argc, char **argv)
-{
-
-	return 0;
 }

@@ -38,7 +38,14 @@ void compute_pid(motor_t *motor)
 
 	pid->prev_input = current_speed;
 
-	motor->response.pwm = (pwm_t) p + i - d;
+	motor->response.pwm = (int) p + i - d;
+
+	if(motor->sample_counter < NUM_SAMPLES)
+	{
+		motor->samples[motor->sample_counter].enc = current_speed;
+		motor->samples[motor->sample_counter].pwm = motor->response.pwm;
+		motor->sample_counter++;
+	}
 }
 
 
@@ -47,11 +54,18 @@ void compute_pid(motor_t *motor)
  *
  * @param controller Controller to initialize
  *
- * @todo Implement this function.
  */
 void init_controller(controller_t *controller)
 {
-	// Just a stub
+	controller->d_const = 0;
+	controller->i_const = 0;
+	controller->p_const = 0;
+	controller->i_sum_min = -10000;
+	controller->i_sum_max = 10000;
+
+	controller->i_sum = 0;
+	controller->prev_input = 0;
+	controller->setpoint = 0;
 }
 
 
@@ -61,9 +75,9 @@ void init_controller(controller_t *controller)
  * @param motor Pointer to the motor_t struct
  * @param sp The new setpoint
  *
- * @todo Implement this function.
  */
 void change_setpoint(motor_t *motor, int sp)
 {
-	// Just a stub
+	motor->controller.setpoint = sp;
+	motor->sample_counter = 0;
 }
