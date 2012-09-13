@@ -12,6 +12,7 @@
 #include <avr/io.h>
 #include "motor.h"
 #include "pid.h"
+#include "clock.h"
 #include "serial.h"
 
 motor_t motor_a, motor_b, motor_c, motor_d;
@@ -24,6 +25,7 @@ motor_t motor_a, motor_b, motor_c, motor_d;
  */
 int main()
 {
+	init_clock();
 	init_serial();
 
 	PORTE.DIRSET = 0xff;
