@@ -27,11 +27,12 @@ int main()
 	init_clock();		// Set up the system clock
 	init_serial();		// Set up the UART
 
-	test_serial_out();	// Print "Hello, world!" in an infinite loop
+	print_banner();		// Print welcome message to the serial port
 
-	/* Make sure control never reaches the end of main() */
 	for(;;)
 	{
-		__asm__ __volatile("nop");
+		get_command();	// Get the next serial command and run it
+
+		//__asm__ __volatile("nop");
 	}
 }

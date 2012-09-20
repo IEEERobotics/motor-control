@@ -269,6 +269,28 @@ void execute_command(command_t *cmd)
 
 
 /**
+ * Print a prompt to stdout, then parse and execute a command from stdin.
+ */
+void get_command(void)
+{
+	command_t cmd;
+
+	printf(prompt);
+	parse_command(&cmd);
+	execute_command(&cmd);
+}
+
+
+/**
+ * Prints a welcome message to stdout.
+ */
+void print_banner(void)
+{
+	puts(banner);
+}
+
+
+/**
  * Simple function to test the serial port. Outputs "Hello, world!" in an infinite loop.
  */
 void test_serial_out(void)

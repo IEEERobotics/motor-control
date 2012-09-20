@@ -46,5 +46,7 @@ token_t find_token(char *token);
 int parse_command(command_t *cmd);
 void execute_command(command_t *cmd);
 void test_serial_out(void);
+void print_banner(void);
+void get_command(void);
 
 #endif /* SERIAL_STDIO_H_ */
