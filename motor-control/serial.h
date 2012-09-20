@@ -1,8 +1,11 @@
-/*
- * serial.h
+/**
+ * @file
+ * @author Ethan LaMaster <ealamast@ncsu.edu>
+ * @version 0.1
  *
- *  Created on: Jul 2, 2012
- *      Author: eal
+ * @section Description
+ *
+ * Functions to initialize the UART, and to parse commands sent over serial.
  */
 
 #ifndef SERIAL_STDIO_H_
@@ -10,6 +13,10 @@
 
 #include <stdio.h>
 
+/**
+ * Valid tokens that can be sent over serial. The values correspond to indices in
+ * the tokens array in serial.c.
+ */
 typedef enum token {
 	TOKEN_UNDEF		= -1,
 	TOKEN_A 		= 0,
@@ -21,10 +28,14 @@ typedef enum token {
 	TOKEN_STATUS 	= 6,
 } token_t;
 
+
+/**
+ * This represents a single serial command.
+ */
 typedef struct command {
-	token_t instruction;
-	token_t motor;
-	int parameter;
+	token_t instruction;	// Instruction identifier
+	token_t motor;			// Motor to operate on. May not apply for some instructions, i.e. 'help'
+	int parameter;			// Integer parameter, i.e. target speed
 } command_t;
 
 void init_serial();

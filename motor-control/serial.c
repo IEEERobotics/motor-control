@@ -1,8 +1,11 @@
-/*
- * serial.c
+/**
+ * @file
+ * @author Ethan LaMaster <ealamast@ncsu.edu>
+ * @version 0.1
  *
- *  Created on: Jul 1, 2012
- *      Author: eal
+ * @section Description
+ *
+ * Functions to initialize the UART, and to parse commands sent over serial.
  */
 
 #include <stdio.h>
@@ -13,8 +16,8 @@
 #include "serial.h"
 
 #define UART USARTC0
-#define USE_DOS_NEWLINES
-//#define UART_ECHO_ON
+#define USE_DOS_NEWLINES		// Use CRLF line endings
+//#define UART_ECHO_ON			// Echo received characters back to the terminal
 
 /**
  * Delimiter string to pass to strtok for parsing commands
@@ -50,12 +53,52 @@ const char *error = "Bad command.";
  * These are the FILE streams that become stdin, stdout, and stderr.
  */
 FILE uart_in, uart_out;
-//FILE uart_io;
+
+
+/**
+ * Initializes the UART. stdio.h won't work until this function is called.
+ */
+void init_serial()
+{
+	// Set up port pins
+	PORTC.DIRSET = PIN3_bm;
+	PORTC.DIRCLR = PIN2_bm;
+
+	// Enable transmit and receive on the UART
+	UART.CTRLB = USART_RXEN_bm
+			   | USART_TXEN_bm;
+
+	// Asynchronous mode, 8 bits, no parity
+	UART.CTRLC = USART_CMODE_ASYNCHRONOUS_gc
+			   | USART_PMODE_DISABLED_gc
+			   | USART_CHSIZE_8BIT_gc;
+
+	// BSEL=2094, BSCALE=-7
+	// Baudrate is 115200 at 32 MHz system clock
+	UART.BAUDCTRLA = 0x2e;
+	UART.BAUDCTRLB = 0x98;
+
+	// Attach the uart_getchar and uart_putchar functions to the UART_IN and UART_OUT
+	// file streams
+	fdev_setup_stream(&uart_in, NULL, uart_getchar, _FDEV_SETUP_READ);
+	fdev_setup_stream(&uart_out, uart_putchar, NULL, _FDEV_SETUP_WRITE);
+
+	// Connect stdin, stdout, and stderr to the UART
+	stdin = &uart_in;
+	stdout = &uart_out;
+	stderr = &uart_out;
+}
 
 
 /**
  * Write a character to the UART. This function is connected to the uart_out FILE stream,
  * which is set to stdout and stderr.
+ *
+ * @param c Character to transmit
+ * @param f FILE pointer to operate on. This parameter is ignored, but is required by
+ * 			stdio.
+ *
+ * @return Character that was transmitted, casted to an int.
  */
 int uart_putchar(char c, FILE *f)
 {
@@ -64,7 +107,7 @@ int uart_putchar(char c, FILE *f)
 		uart_putchar('\r', stdout);
 #endif
 
-	while((UART.STATUS & USART_DREIF_bm) == 0);
+	while((UART.STATUS & USART_DREIF_bm) == 0);		// Block until ready to transmit
 	UART.DATA = c;
 
 	return c;
@@ -74,56 +117,25 @@ int uart_putchar(char c, FILE *f)
 /**
  * Read a character from the UART. This function is connected to the uart_in FILE stream,
  * which is set to stdin.
+ *
+ * @param f FILE pointer to operate on. This parameter is ignored, but is required by
+ * 			stdio.
+ *
+ * @return Received character, casted to an int.
  */
 int uart_getchar(FILE *f)
 {
 #ifdef UART_ECHO_ON
 	char c;
 #endif
-	while((UART.STATUS & USART_RXCIF_bm) == 0);
+	while((UART.STATUS & USART_RXCIF_bm) == 0);		// Block until character is received
 #ifdef UART_ECHO_ON
 	c = UART.DATA;
-	uart_putchar(c);
-	return c;
+	uart_putchar(c, NULL);
+	return (int) c;
 #else
-	return UART.DATA;
+	return (int) UART.DATA;
 #endif
-}
-
-
-/**
- * Initializes the UART. stdio.h won't work until this function is called.
- */
-void init_serial()
-{
-	//TODO set up port pins
-	PORTC.DIRSET = PIN3_bm;
-	PORTC.DIRCLR = PIN2_bm;
-
-	UART.CTRLB = USART_RXEN_bm
-			   | USART_TXEN_bm;
-	UART.CTRLC = USART_CMODE_ASYNCHRONOUS_gc
-			   | USART_PMODE_DISABLED_gc
-			   | USART_CHSIZE_8BIT_gc;
-
-	// BSEL=2094, BSCALE=-7
-	//UART.BAUDCTRLA = 0x2e;
-	//UART.BAUDCTRLB = 0x98;
-
-	// BSEL=1047, BSCALE=-6
-	//UART.BAUDCTRLA = 0x17;
-	//UART.BAUDCTRLB = 0xa4;
-
-	UART.BAUDCTRLA  = 12;
-	UART.BAUDCTRLB = 0;
-
-	fdev_setup_stream(&uart_in, NULL, uart_getchar, _FDEV_SETUP_READ);
-	fdev_setup_stream(&uart_out, uart_putchar, NULL, _FDEV_SETUP_WRITE);
-//	fdev_setup_stream(&uart_io, uart_putchar, uart_getchar, _FDEV_SETUP_RW);
-
-	stdin = &uart_in;
-	stdout = &uart_out;
-	stderr = &uart_out;
 }
 
 
@@ -210,6 +222,13 @@ int parse_command(command_t *cmd)
 }
 
 
+/**
+ * Execute a command_t struct.
+ *
+ * @param cmd command_t to execute
+ *
+ * @todo Finish implementing this function.
+ */
 void execute_command(command_t *cmd)
 {
 	switch(cmd->instruction)
@@ -219,6 +238,8 @@ void execute_command(command_t *cmd)
 		break;
 
 	case TOKEN_RUN:
+		puts("Not implemented.");
+#ifdef false
 		switch(cmd->motor)
 		{
 		case TOKEN_A:
@@ -233,9 +254,11 @@ void execute_command(command_t *cmd)
 			puts(error);
 			break;
 		}
+#endif
 		break;
 
 	case TOKEN_STATUS:
+		puts("Not implemented.");
 		break;
 
 	default:
@@ -245,14 +268,13 @@ void execute_command(command_t *cmd)
 }
 
 
+/**
+ * Simple function to test the serial port. Outputs "Hello, world!" in an infinite loop.
+ */
 void test_serial_out(void)
 {
-	PORTA.DIRSET = 0xff;
-
 	for(;;)
 	{
-		PORTA.OUTTGL = 0xff;
-		//puts("Hello, world!");
-		uart_putchar('a', NULL);
+		puts("Hello, world!");
 	}
 }
