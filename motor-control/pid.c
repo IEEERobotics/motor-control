@@ -7,6 +7,7 @@
  *
  * Functions implementing a software PID controller
  *
+ * @todo Set up timer interrupt to run compute_pid()
  */
 
 #include "motor.h"

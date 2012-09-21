@@ -17,7 +17,7 @@
 
 #define UART USARTC0
 #define USE_DOS_NEWLINES		// Use CRLF line endings
-//#define UART_ECHO_ON			// Echo received characters back to the terminal
+#define UART_ECHO_ON			// Echo received characters back to the terminal
 
 /**
  * Delimiter string to pass to strtok for parsing commands
@@ -192,15 +192,25 @@ token_t find_token(char *token)
  * @param cmd Pointer to the command_t struct
  *
  * @return 0 on success, or nonzero if an EOF is received.
+ *
+ * @todo Add backspace support
  */
 int parse_command(command_t *cmd)
 {
 	char input[16];
 	char *tok;
+	int i;
 
-	if(fgets(input, 16, stdin) == NULL)
-		return -1;
+	for(i=0; i<15; i++)
+	{
+		input[i] = getchar();
 
+		if(input[i] == '\n' || input[i] == '\r')
+			break;
+	}
+
+	input[i] = '\0';
+	printf("\n");
 	tolower_str(input);
 
 	if((tok = strtok(input, delimiters)) != NULL)
