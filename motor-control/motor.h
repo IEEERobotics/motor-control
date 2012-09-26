@@ -27,7 +27,6 @@
 #define MS_TIMER    TCE0
 #define NUM_SAMPLES 256		// Number of samples to save in memory after changing the setpoint
 
-extern motor_t motor_a, motor_b, motor_c, motor_d;
 
 /**
  * @enum direction
@@ -90,6 +89,7 @@ typedef struct motor {
 	short int sample_counter;
 } motor_t;
 
+extern motor_t motor_a, motor_b, motor_c, motor_d;
 
 void init_motor(motor_t *motor);
 void init_pwm_timer(TC0_t *timer);

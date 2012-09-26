@@ -48,6 +48,7 @@ const char *banner = "NCSU IEEE 2012 Motor Controller\n"
 					 "Type \"help\" for a list of available commands.";
 const char *help = "Not implemented.";
 const char *error = "Bad command.";
+const char *bad_motor = "Bad motor.";
 
 
 /**
@@ -248,16 +249,16 @@ void execute_command(command_t *cmd)
 	switch(cmd->motor)
 	{
 	case TOKEN_A:
-		motor = motor_a;
+		motor = &motor_a;
 		break;
 	case TOKEN_B:
-		motor = motor_b;
+		motor = &motor_b;
 		break;
 	case TOKEN_C:
-		motor = motor_c;
+		motor = &motor_c;
 		break;
 	case TOKEN_D:
-		motor = motor_d;
+		motor = &motor_d;
 		break;
 	default:
 		motor = NULL;
@@ -278,7 +279,7 @@ void execute_command(command_t *cmd)
 		break;
 
 	case TOKEN_STATUS:
-		puts("Not implemented.");
+		print_status(motor);
 		break;
 
 	default:
@@ -318,5 +319,34 @@ void test_serial_out(void)
 	for(;;)
 	{
 		puts("Hello, world!");
+	}
+}
+
+
+/**
+ * Print the first NUM_SAMPLES after last changing the setpoint of motor
+ */
+void print_status(motor_t *motor)
+{
+	int i;
+
+	if(motor == NULL)
+	{
+		puts(bad_motor);
+		return;
+	}
+
+	if(motor->sample_counter < NUM_SAMPLES)
+	{
+		printf("The sample buffer is not yet full. Only %d out of %d samples have been "
+			   "collected so far.\n", motor->sample_counter+1, NUM_SAMPLES);
+		return;
+	}
+
+	puts("t,pwm,speed");
+
+	for(i=0; i<NUM_SAMPLES; i++)
+	{
+		printf("%d,%d,%d\n", i, motor->samples->pwm, motor->samples->enc);
 	}
 }

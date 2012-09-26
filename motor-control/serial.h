@@ -48,5 +48,6 @@ void execute_command(command_t *cmd);
 void test_serial_out(void);
 void print_banner(void);
 void get_command(void);
+void print_status(motor_t *motor);
 
 #endif /* SERIAL_STDIO_H_ */
