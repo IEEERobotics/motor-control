@@ -25,8 +25,9 @@
 #define ENC_TIMER2  TCE1
 #define ENC_TIMER3  TCF1
 #define MS_TIMER    TCE0
-#define NUM_SAMPLES 256
+#define NUM_SAMPLES 256		// Number of samples to save in memory after changing the setpoint
 
+extern motor_t motor_a, motor_b, motor_c, motor_d;
 
 /**
  * @enum direction

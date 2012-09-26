@@ -15,8 +15,6 @@
 #include "clock.h"
 #include "serial.h"
 
-motor_t motor_a, motor_b, motor_c, motor_d;
-
 
 /**
  * Does magic.

@@ -35,6 +35,11 @@
 #include "motor.h"
 
 /**
+ * Structs representing the four motors
+ */
+motor_t motor_a, motor_b, motor_c, motor_d;
+
+/**
  * Initializes a PWM timer
  *
  * Configures the timer to generate a single-slope PWM waveform, sets the period

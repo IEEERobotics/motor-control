@@ -13,6 +13,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <avr/io.h>
+#include "motor.h"
 #include "serial.h"
 
 #define UART USARTC0
@@ -180,7 +181,7 @@ token_t find_token(char *token)
 								   comp_token);
 
 	if(match == NULL)
-		return -1;
+		return TOKEN_UNDEF;
 	else
 		return ((int)match - (int)tokens) / sizeof(*tokens);
 }
@@ -241,6 +242,28 @@ int parse_command(command_t *cmd)
  */
 void execute_command(command_t *cmd)
 {
+	motor_t *motor;
+
+	/* Get motor_t struct */
+	switch(cmd->motor)
+	{
+	case TOKEN_A:
+		motor = motor_a;
+		break;
+	case TOKEN_B:
+		motor = motor_b;
+		break;
+	case TOKEN_C:
+		motor = motor_c;
+		break;
+	case TOKEN_D:
+		motor = motor_d;
+		break;
+	default:
+		motor = NULL;
+		break;
+	}
+
 	switch(cmd->instruction)
 	{
 	case TOKEN_HELP:
@@ -248,23 +271,10 @@ void execute_command(command_t *cmd)
 		break;
 
 	case TOKEN_RUN:
-		puts("Not implemented.");
-#ifdef false
-		switch(cmd->motor)
-		{
-		case TOKEN_A:
-			break;
-		case TOKEN_B:
-			break;
-		case TOKEN_C:
-			break;
-		case TOKEN_D:
-			break;
-		default:
-			puts(error);
-			break;
-		}
-#endif
+		if(motor != NULL)
+			change_setpoint(motor, cmd->parameter);
+		else
+			puts("Bad motor.");
 		break;
 
 	case TOKEN_STATUS:
