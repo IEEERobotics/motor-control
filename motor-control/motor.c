@@ -32,6 +32,7 @@
  */
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include "motor.h"
 
 /**
@@ -86,6 +87,18 @@ void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel)
 	timer->CTRLB = TC_WGMODE_NORMAL_gc | TC1_CCAEN_bm;
 	timer->CTRLD = TC_EVACT_FRQ_gc | event_channel;
 	timer->PERBUF = 0xffff;
+}
+
+
+void init_ms_timer(void)
+{
+	MS_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;		// Clock source is system clock
+	MS_TIMER.CTRLB = TC_WGMODE_NORMAL_gc;		// Normal waveform generation mode
+	MS_TIMER.INTCTRLA = TC_OVFINTLVL_MED_gc;	// Medium priority interrupt
+	MS_TIMER.PER = 500 * MS_TIMER_PER;			// Timer period
+
+	PMIC.CTRL |= PMIC_MEDLVLEN_bm;				// Enable medium level interrupts
+	sei();
 }
 
 
@@ -168,12 +181,31 @@ void change_direction(motor_t *motor, direction_t dir)
  *
  * @param motor Motor to update
  *
- * @todo Implement this function.
  */
 void update_speed(motor_t *motor)
 {
-	// Just a stub
+	switch(motor->response.dir)
+	{
+	case DIR_BRAKE:
+		motor->reg.pwma = 0;
+		motor->reg.pwmb = 0;
+		break;
+	case DIR_FORWARD:
+		motor->reg.pwma = motor->response.pwm;
+		motor->reg.pwmb = 0;
+		break;
+	case DIR_REVERSE:
+		motor->reg.pwma = 0;
+		motor->reg.pwmb = motor->response.pwm;
+		break;
+	}
 }
 
 
+/**
+ * MS_TIMER interrupt service routine
+ */
+ISR(TCE0_OVF_vect)
+{
 
+}

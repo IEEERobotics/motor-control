@@ -18,14 +18,15 @@
 
 #define PWM_PERIOD 10000
 
-#define PWM_TIMER0  TCC0
-#define PWM_TIMER1  TCD0
-#define ENC_TIMER0  TCC1
-#define ENC_TIMER1  TCD1
-#define ENC_TIMER2  TCE1
-#define ENC_TIMER3  TCF1
-#define MS_TIMER    TCE0
-#define NUM_SAMPLES 256		// Number of samples to save in memory after changing the setpoint
+#define PWM_TIMER0  	TCD0
+#define PWM_TIMER1  	TCF0
+#define ENC_TIMER0  	TCC1
+#define ENC_TIMER1  	TCD1
+#define ENC_TIMER2  	TCE1
+#define ENC_TIMER3  	TCF1
+#define MS_TIMER    	TCE0
+#define MS_TIMER_PER	5		// Period of MS_TIMER in milliseconds
+#define NUM_SAMPLES 	256		// Number of samples to save in memory after changing the setpoint
 
 
 /**
