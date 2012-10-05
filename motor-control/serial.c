@@ -16,7 +16,7 @@
 #include "motor.h"
 #include "serial.h"
 
-#define UART USARTC0
+#define UART USARTD0
 #define USE_DOS_NEWLINES		// Use CRLF line endings
 #define UART_ECHO_ON			// Echo received characters back to the terminal
 
