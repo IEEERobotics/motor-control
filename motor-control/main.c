@@ -61,6 +61,7 @@
 int main()
 {
 	init_clock();		// Set up the system clock
+	init_motors();		// Set up everything to do with motor control
 	init_serial();		// Set up the UART
 
 	print_banner();		// Print welcome message to the serial port
