@@ -30,8 +30,8 @@ typedef struct controller {
 	int setpoint;		//!< The value at which the controller will attempt to converge
 } controller_t;
 
-
+void compute_pid(motor_t *motor);
 void init_controller(controller_t *controller);
-
+void change_setpoint(motor_t *motor, int sp);
 
 #endif /* PID_H_ */
