@@ -13,6 +13,10 @@
 #ifndef MOTOR_H_
 #define MOTOR_H_
 
+/* Predeclaring this struct is necessary because of circular references in pid.h */
+struct motor;
+typedef struct motor motor_t;
+
 #include <avr/io.h>
 #include "pid.h"
 
@@ -82,23 +86,26 @@ typedef struct sample {
  *
  * Container for the three structs that define a motor.
  */
-typedef struct motor {
+struct motor {
 	motor_reg_t reg;
 	motor_response_t response;
 	controller_t controller;
 	sample_t samples[NUM_SAMPLES];
 	short int sample_counter;
-} motor_t;
+};
 
 extern motor_t motor_a, motor_b, motor_c, motor_d;
 
-void init_motor(motor_t *motor);
+void init_motor(motor_t *motor, register16_t *pwma, register16_t *pwmb, register16_t *enc);
+void init_motor_reg(motor_reg_t *reg, register16_t *pwma, register16_t *pwmb, register16_t *enc);
 void init_pwm_timer(TC0_t *timer);
 void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel);
-void init_enc_port(PORT_t *port);
+void init_motor_port(PORT_t *port);
 void change_setpoint(motor_t *motor, int sp);
 void change_direction(motor_t *motor, direction_t dir);
 void update_speed(motor_t *motor);
+void init_ms_timer(void);
+void init_motors(void);
 
 
 #endif /* MOTOR_H_ */

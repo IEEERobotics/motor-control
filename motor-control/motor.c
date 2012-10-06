@@ -34,6 +34,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "motor.h"
+#include "pid.h"
 
 /**
  * Structs representing the four motors
@@ -90,6 +91,16 @@ void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel)
 }
 
 
+/**
+ * Initialize the millisecond timer.
+ *
+ * This will be used to generate an interrupt at regular intervals, in which the next
+ * PID iteration will be computed and the motor output speeds updated.
+ *
+ * This doesn't actually have to occur every millisecond, and the period will likely
+ * have to be tweaked depending on the response of the motors. The period is controlled
+ * by the MS_TIMER_PER macro in motor.h.
+ */
 void init_ms_timer(void)
 {
 	MS_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;		// Clock source is system clock
@@ -103,15 +114,16 @@ void init_ms_timer(void)
 
 
 /**
- * Initializes an encoder port
+ * Initializes a motor port
  *
  * @param port Pointer to the port to initialize
  *
  * @todo Implement this function.
  */
-void init_enc_port(PORT_t *port)
+void init_motor_port(PORT_t *port)
 {
-	// Just a stub
+	/* Set pins 0-3 as outputs (PWM signal) and pins 4-7 as inputs (quadrature encoders) */
+	port->DIR = PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm;
 }
 
 
@@ -133,12 +145,20 @@ void init_motor_response(motor_response_t *resp)
  * Initializes a motor_reg_t struct
  *
  * @param reg Pointer to the motor_t struct to initialize
+ * @param pwma First timer compare register for PWM signal generation
+ * @param pwmb Second timer compare register for PWM signal generation
+ * @param enc Encoder counter register
  *
  * @todo Implement this function.
  */
-void init_motor_reg(motor_reg_t *reg)
+void init_motor_reg(motor_reg_t *reg,
+					register16_t *pwma,
+					register16_t *pwmb,
+					register16_t *enc)
 {
-	// Just a stub
+	reg->pwma = pwma;
+	reg->pwmb = pwmb;
+	reg->enc = enc;
 }
 
 
@@ -149,12 +169,52 @@ void init_motor_reg(motor_reg_t *reg)
  *
  * @todo Implement this function.
  */
-void init_motor(motor_t *motor)
+void init_motor(motor_t *motor,
+				register16_t *pwma,
+				register16_t *pwmb,
+				register16_t *enc)
 {
-	init_motor_reg(&(motor->reg));
+	init_motor_reg(&(motor->reg), pwma, pwmb, enc);
 	init_motor_response(&(motor->response));
 	init_controller(&(motor->controller));
 	motor->sample_counter = 0;
+}
+
+
+/**
+ * Top-level function to initialize the motors
+ */
+void init_motors(void)
+{
+	/* Connect the first 4 event channels to the quadrature encoder inputs.
+	 * We have to use the event system because two timers are connected to port E,
+	 * which does not have a header on our development board (that port is connected
+	 * to the board's 8 LEDs)
+	 */
+	EVSYS.CH0MUX = EVSYS_CHMUX_PORTC_PIN4_gc;
+	EVSYS.CH1MUX = EVSYS_CHMUX_PORTC_PIN5_gc;
+	EVSYS.CH2MUX = EVSYS_CHMUX_PORTF_PIN4_gc;
+	EVSYS.CH3MUX = EVSYS_CHMUX_PORTF_PIN5_gc;
+
+	/* Properly set the direction register for the two motor ports */
+	init_motor_port(&PORTC);
+	init_motor_port(&PORTF);
+
+	/* Initialize the timers responsible for generating PWM signals */
+	init_pwm_timer(&TCC0);
+	init_pwm_timer(&TCF0);
+
+	/* Initialize the timers responsible for measuring the quadrature encoder period. */
+	init_enc_timer(&TCC1, TC_EVSEL_CH0_gc);
+	init_enc_timer(&TCD1, TC_EVSEL_CH1_gc);
+	init_enc_timer(&TCE1, TC_EVSEL_CH2_gc);
+	init_enc_timer(&TCF1, TC_EVSEL_CH3_gc);
+
+	/* Initialize the 4 motor_t structs */
+	init_motor(&motor_a, &(TCC0.CCA), &(TCC0.CCB), &(TCC1.CCA));
+	init_motor(&motor_b, &(TCC0.CCC), &(TCC0.CCD), &(TCD1.CCA));
+	init_motor(&motor_c, &(TCF0.CCA), &(TCF0.CCB), &(TCE1.CCA));
+	init_motor(&motor_d, &(TCF0.CCC), &(TCF0.CCD), &(TCF1.CCA));
 }
 
 
@@ -191,12 +251,12 @@ void update_speed(motor_t *motor)
 		motor->reg.pwmb = 0;
 		break;
 	case DIR_FORWARD:
-		motor->reg.pwma = motor->response.pwm;
+		*(motor->reg.pwma) = motor->response.pwm;
 		motor->reg.pwmb = 0;
 		break;
 	case DIR_REVERSE:
 		motor->reg.pwma = 0;
-		motor->reg.pwmb = motor->response.pwm;
+		*(motor->reg.pwmb) = motor->response.pwm;
 		break;
 	}
 }
@@ -207,5 +267,13 @@ void update_speed(motor_t *motor)
  */
 ISR(TCE0_OVF_vect)
 {
+	compute_pid(&motor_a);
+	compute_pid(&motor_b);
+	compute_pid(&motor_c);
+	compute_pid(&motor_d);
 
+	update_speed(&motor_a);
+	update_speed(&motor_b);
+	update_speed(&motor_c);
+	update_speed(&motor_d);
 }
