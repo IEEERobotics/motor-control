@@ -25,8 +25,4 @@ void init_clock(void)
 
 	// Turn off unused clock sources
 	CLKSYS_Disable(OSC_RC32MEN_bm | OSC_RC32KEN_bm);
-
-	// Output clock on port C, pin 7
-	PORTC.DIRSET |= PIN7_bm;
-	PORTCFG.CLKEVOUT = PORTCFG_CLKOUT_PC7_gc;
 }
