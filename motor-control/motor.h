@@ -76,8 +76,8 @@ typedef struct motor_response {
 
 
 typedef struct sample {
-	short int pwm;
-	short int enc;
+	short unsigned int pwm;
+	short unsigned int enc;
 } sample_t;
 
 

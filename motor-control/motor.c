@@ -84,7 +84,7 @@ void init_pwm_timer(TC0_t *timer)
  */
 void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel)
 {
-	timer->CTRLA = TC_CLKSEL_DIV1_gc;
+	timer->CTRLA = TC_CLKSEL_DIV64_gc;
 	timer->CTRLB = TC_WGMODE_NORMAL_gc | TC1_CCAEN_bm;
 	timer->CTRLD = TC_EVACT_FRQ_gc | event_channel;
 	timer->PERBUF = 0xffff;
@@ -103,7 +103,7 @@ void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel)
  */
 void init_ms_timer(void)
 {
-	MS_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;		// Clock source is system clock
+	MS_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;			// Clock source is system clock
 	MS_TIMER.CTRLB = TC_WGMODE_NORMAL_gc;		// Normal waveform generation mode
 	MS_TIMER.INTCTRLA = TC_OVFINTLVL_MED_gc;	// Medium priority interrupt
 	MS_TIMER.PER = 500 * MS_TIMER_PER;			// Timer period
@@ -191,8 +191,8 @@ void init_motors(void)
 	 * which does not have a header on our development board (that port is connected
 	 * to the board's 8 LEDs)
 	 */
-	EVSYS.CH0MUX = EVSYS_CHMUX_PORTC_PIN4_gc;
-	EVSYS.CH1MUX = EVSYS_CHMUX_PORTC_PIN5_gc;
+	EVSYS.CH0MUX = EVSYS_CHMUX_PORTD_PIN4_gc;
+	EVSYS.CH1MUX = EVSYS_CHMUX_PORTD_PIN5_gc;
 	EVSYS.CH2MUX = EVSYS_CHMUX_PORTF_PIN4_gc;
 	EVSYS.CH3MUX = EVSYS_CHMUX_PORTF_PIN5_gc;
 

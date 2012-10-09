@@ -16,7 +16,7 @@
 #include "motor.h"
 #include "serial.h"
 
-#define UART USARTD0
+#define UART USARTC0
 #define USE_DOS_NEWLINES		// Use CRLF line endings
 #define UART_ECHO_ON			// Echo received characters back to the terminal
 
@@ -347,6 +347,6 @@ void print_status(motor_t *motor)
 
 	for(i=0; i<NUM_SAMPLES; i++)
 	{
-		printf("%d,%d,%d\n", i, motor->samples->pwm, motor->samples->enc);
+		printf("%d,%u,%u\n", i, motor->samples->pwm, motor->samples->enc);
 	}
 }
