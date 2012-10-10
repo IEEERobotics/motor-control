@@ -20,6 +20,7 @@
 #define USE_DOS_NEWLINES		// Use CRLF line endings
 #define UART_ECHO_ON			// Echo received characters back to the terminal
 
+
 /**
  * Delimiter string to pass to strtok for parsing commands
  */
@@ -38,8 +39,10 @@ const char *tokens[] = { "a",
 					   	 "b",
 					   	 "c",
 					   	 "d",
+					   	 "heading",
 					   	 "help",
-					   	 "run",
+					   	 "pwm",
+					   	 "set",
 					   	 "status"
 };
 
@@ -175,6 +178,9 @@ static int comp_token(const void *a, const void *b)
  */
 token_t find_token(char *token)
 {
+	if(token == NULL)
+		return TOKEN_UNDEF;
+
 	char *match = (char *) bsearch(&token,
 								   tokens,
 								   sizeof(tokens)/sizeof(*tokens),
@@ -189,19 +195,42 @@ token_t find_token(char *token)
 
 
 /**
- * Read a line from stdin, and tokenize it into a command_t struct.
- *
- * @param cmd Pointer to the command_t struct
- *
- * @return 0 on success, or nonzero if an EOF is received.
- *
- * @todo Add backspace support
+ * Returns a pointer to the motor referenced by token, or NULL if the token
+ * is not a motor.
  */
-int parse_command(command_t *cmd)
+motor_t *get_motor(token_t token)
+{
+	switch(token)
+	{
+	case TOKEN_A:
+		return &motor_a;
+		break;
+	case TOKEN_B:
+		return &motor_b;
+		break;
+	case TOKEN_C:
+		return &motor_c;
+		break;
+	case TOKEN_D:
+		return &motor_d;
+		break;
+	default:
+		break;
+	}
+
+	return NULL;
+}
+
+
+/**
+ * Read a command from the serial terminal and parse it.
+ */
+void parse_command(void)
 {
 	char input[16];
 	char *tok;
 	int i;
+	motor_t *motor;
 
 	for(i=0; i<15; i++)
 	{
@@ -215,73 +244,43 @@ int parse_command(command_t *cmd)
 	printf("\n");
 	tolower_str(input);
 
-	if((tok = strtok(input, delimiters)) != NULL)
-		cmd->instruction = find_token(tok);
-	else
-		cmd->instruction = TOKEN_UNDEF;
-
-	if((tok = strtok(NULL, delimiters)) != NULL)
-		cmd->motor = find_token(tok);
-	else
-		cmd->motor = TOKEN_UNDEF;
-
-	if((tok = strtok(NULL, delimiters)) != NULL)
-		cmd->parameter = atoi(tok);
-	else
-		cmd->parameter = 0;
-
-	return 0;
-}
-
-
-/**
- * Execute a command_t struct.
- *
- * @param cmd command_t to execute
- *
- * @todo Finish implementing this function.
- */
-void execute_command(command_t *cmd)
-{
-	motor_t *motor;
-
-	/* Get motor_t struct */
-	switch(cmd->motor)
+	switch(find_token(strtok(input, delimiters)))
 	{
-	case TOKEN_A:
-		motor = &motor_a;
+	case TOKEN_HEADING:
+		puts("Not implemented");
 		break;
-	case TOKEN_B:
-		motor = &motor_b;
-		break;
-	case TOKEN_C:
-		motor = &motor_c;
-		break;
-	case TOKEN_D:
-		motor = &motor_d;
-		break;
-	default:
-		motor = NULL;
-		break;
-	}
-
-	switch(cmd->instruction)
-	{
 	case TOKEN_HELP:
 		puts(help);
 		break;
+	case TOKEN_PWM:
+		motor = get_motor(find_token(strtok(NULL, delimiters)));
+		tok = strtok(NULL, delimiters);
 
-	case TOKEN_RUN:
-		if(motor != NULL)
-			change_setpoint(motor, cmd->parameter);
+		if(motor != NULL && tok != NULL)
+			run_pwm(motor, atoi(tok));
+		else if(motor == NULL)
+			puts(bad_motor);
 		else
-			puts("Bad motor.");
+			puts(error);
 		break;
+	case TOKEN_SET:
+		motor = get_motor(find_token(strtok(NULL, delimiters)));
+		tok = strtok(NULL, delimiters);
 
+		if(motor != NULL && tok != NULL)
+			run_pid(motor, atoi(tok));
+		else if(motor == NULL)
+			puts(bad_motor);
+		else
+			puts(error);
+		break;
 	case TOKEN_STATUS:
-		print_status(motor);
+		motor = get_motor(find_token(strtok(NULL, delimiters)));
+		if(motor != NULL)
+			print_status(motor);
+		else
+			puts(bad_motor);
 		break;
-
 	default:
 		puts(error);
 		break;
@@ -294,11 +293,8 @@ void execute_command(command_t *cmd)
  */
 void get_command(void)
 {
-	command_t cmd;
-
 	printf(prompt);
-	parse_command(&cmd);
-	execute_command(&cmd);
+	parse_command();
 }
 
 
@@ -349,4 +345,50 @@ void print_status(motor_t *motor)
 	{
 		printf("%d,%u,%u\n", i, motor->samples->pwm, motor->samples->enc);
 	}
+}
+
+
+void run_pwm(motor_t *motor, int pwm)
+{
+	motor->controller.enabled = 0;
+
+	if(pwm > 0)
+	{
+		change_pwm(motor, pwm);
+		change_direction(motor, DIR_FORWARD);
+	}
+	else if(pwm < 0)
+	{
+		change_pwm(motor, pwm);
+		change_direction(motor, DIR_REVERSE);
+	}
+	else
+	{
+		change_pwm(motor, pwm);
+		change_direction(motor, DIR_BRAKE);
+	}
+
+	update_speed(motor);
+}
+
+
+void run_pid(motor_t *motor, int sp)
+{
+	if(sp > 0)
+	{
+		change_setpoint(motor, sp);
+		change_direction(motor, DIR_FORWARD);
+	}
+	else if(sp < 0)
+	{
+		change_setpoint(motor, -sp);
+		change_direction(motor, DIR_REVERSE);
+	}
+	else
+	{
+		change_setpoint(motor, 0);
+		change_direction(motor, DIR_BRAKE);
+	}
+
+	motor->controller.enabled = 1;
 }

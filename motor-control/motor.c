@@ -223,14 +223,26 @@ void init_motors(void)
  *
  * The change in direction doesn't take place until update_speed() is called.
  *
- * @param motor Pointer to the motor_t struct to initialize
+ * @param motor Pointer to the motor_t struct to modify
  * @param dir New direction
- *
- * @todo Implement this function.
  */
 void change_direction(motor_t *motor, direction_t dir)
 {
 	motor->response.dir = dir;
+}
+
+
+/**
+ * Change the PWM duty cycle of a motor
+ *
+ * The change in direction doesn't take place until update_speed() is called.
+ *
+ * @param motor Pointer to the motor_t struct to modify
+ * @param pwm New PWM value
+ */
+void change_pwm(motor_t *motor, int pwm)
+{
+	motor->response.pwm = pwm;
 }
 
 
@@ -267,13 +279,28 @@ void update_speed(motor_t *motor)
  */
 ISR(TCE0_OVF_vect)
 {
-	compute_pid(&motor_a);
-	compute_pid(&motor_b);
-	compute_pid(&motor_c);
-	compute_pid(&motor_d);
+	if(motor_a.controller.enabled)
+	{
+		compute_pid(&motor_a);
+		update_speed(&motor_a);
+	}
 
-	update_speed(&motor_a);
-	update_speed(&motor_b);
-	update_speed(&motor_c);
-	update_speed(&motor_d);
+	if(motor_b.controller.enabled)
+	{
+		compute_pid(&motor_b);
+		update_speed(&motor_b);
+
+	}
+
+	if(motor_c.controller.enabled)
+	{
+		compute_pid(&motor_c);
+		update_speed(&motor_c);
+	}
+
+	if(motor_d.controller.enabled)
+	{
+		compute_pid(&motor_d);
+		update_speed(&motor_d);
+	}
 }

@@ -103,6 +103,7 @@ void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel);
 void init_motor_port(PORT_t *port);
 void change_setpoint(motor_t *motor, int sp);
 void change_direction(motor_t *motor, direction_t dir);
+void change_pwm(motor_t *motor, int pwm);
 void update_speed(motor_t *motor);
 void init_ms_timer(void);
 void init_motors(void);

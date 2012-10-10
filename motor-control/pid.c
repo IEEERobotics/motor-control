@@ -67,6 +67,7 @@ void init_controller(controller_t *controller)
 	controller->i_sum = 0;
 	controller->prev_input = 0;
 	controller->setpoint = 0;
+	controller->enabled = 0;
 }
 
 

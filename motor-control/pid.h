@@ -28,6 +28,7 @@ typedef struct controller {
 	int i_sum_max;		//   windup".
 	int prev_input;		//!< The last input, used for computing the derivative term
 	int setpoint;		//!< The value at which the controller will attempt to converge
+	char enabled;		//!< True if PID is enabled, otherwise false
 } controller_t;
 
 void compute_pid(motor_t *motor);

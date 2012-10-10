@@ -23,31 +23,25 @@ typedef enum token {
 	TOKEN_B 		= 1,
 	TOKEN_C 		= 2,
 	TOKEN_D 		= 3,
-	TOKEN_HELP 		= 4,
-	TOKEN_RUN 		= 5,
-	TOKEN_STATUS 	= 6,
+	TOKEN_HEADING	= 4,
+	TOKEN_HELP 		= 5,
+	TOKEN_PWM		= 6,
+	TOKEN_SET 		= 7,
+	TOKEN_STATUS 	= 8,
 } token_t;
 
-
-/**
- * This represents a single serial command.
- */
-typedef struct command {
-	token_t instruction;	// Instruction identifier
-	token_t motor;			// Motor to operate on. May not apply for some instructions, i.e. 'help'
-	int parameter;			// Integer parameter, i.e. target speed
-} command_t;
 
 void init_serial();
 int uart_putchar(char c, FILE *f);
 int uart_getchar(FILE *f);
 void tolower_str(char *str);
 token_t find_token(char *token);
-int parse_command(command_t *cmd);
-void execute_command(command_t *cmd);
+void parse_command(void);
 void test_serial_out(void);
 void print_banner(void);
 void get_command(void);
 void print_status(motor_t *motor);
+void run_pwm(motor_t *motor, int pwm);
+void run_pid(motor_t *motor, int sp);
 
 #endif /* SERIAL_STDIO_H_ */
