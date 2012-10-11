@@ -47,7 +47,7 @@ const char *tokens[] = { "a",
 };
 
 const char *prompt = "> ";
-const char *banner = "NCSU IEEE 2012 Motor Controller\n"
+const char *banner = "\fNCSU IEEE 2012 Hardware Team Motor Controller\n"
 					 "Type \"help\" for a list of available commands.";
 const char *help = "Not implemented.";
 const char *error = "Bad command.";
@@ -343,7 +343,7 @@ void print_status(motor_t *motor)
 
 	for(i=0; i<NUM_SAMPLES; i++)
 	{
-		printf("%d,%u,%u\n", i, motor->samples->pwm, motor->samples->enc);
+		printf("%d,%u,%u\n", i, motor->samples[i].pwm, motor->samples[i].enc);
 	}
 }
 
@@ -359,12 +359,12 @@ void run_pwm(motor_t *motor, int pwm)
 	}
 	else if(pwm < 0)
 	{
-		change_pwm(motor, pwm);
+		change_pwm(motor, -pwm);
 		change_direction(motor, DIR_REVERSE);
 	}
 	else
 	{
-		change_pwm(motor, pwm);
+		change_pwm(motor, 0);
 		change_direction(motor, DIR_BRAKE);
 	}
 
