@@ -197,24 +197,24 @@ void init_motors(void)
 	EVSYS.CH3MUX = EVSYS_CHMUX_PORTF_PIN5_gc;
 
 	/* Properly set the direction register for the two motor ports */
-	init_motor_port(&PORTC);
-	init_motor_port(&PORTF);
+	init_motor_port(&PWM_PORT0);
+	init_motor_port(&PWM_PORT1);
 
 	/* Initialize the timers responsible for generating PWM signals */
-	init_pwm_timer(&TCC0);
-	init_pwm_timer(&TCF0);
+	init_pwm_timer(&PWM_TIMER0);
+	init_pwm_timer(&PWM_TIMER1);
 
 	/* Initialize the timers responsible for measuring the quadrature encoder period. */
-	init_enc_timer(&TCC1, TC_EVSEL_CH0_gc);
-	init_enc_timer(&TCD1, TC_EVSEL_CH1_gc);
-	init_enc_timer(&TCE1, TC_EVSEL_CH2_gc);
-	init_enc_timer(&TCF1, TC_EVSEL_CH3_gc);
+	init_enc_timer(&ENC_TIMER0, TC_EVSEL_CH0_gc);
+	init_enc_timer(&ENC_TIMER1, TC_EVSEL_CH1_gc);
+	init_enc_timer(&ENC_TIMER2, TC_EVSEL_CH2_gc);
+	init_enc_timer(&ENC_TIMER3, TC_EVSEL_CH3_gc);
 
 	/* Initialize the 4 motor_t structs */
-	init_motor(&motor_a, &(TCC0.CCA), &(TCC0.CCB), &(TCC1.CCA));
-	init_motor(&motor_b, &(TCC0.CCC), &(TCC0.CCD), &(TCD1.CCA));
-	init_motor(&motor_c, &(TCF0.CCA), &(TCF0.CCB), &(TCE1.CCA));
-	init_motor(&motor_d, &(TCF0.CCC), &(TCF0.CCD), &(TCF1.CCA));
+	init_motor(&motor_a, &(PWM_TIMER0.CCA), &(TCD0.CCB), &(ENC_TIMER0.CCA));
+	init_motor(&motor_b, &(PWM_TIMER0.CCC), &(TCD0.CCD), &(ENC_TIMER1.CCA));
+	init_motor(&motor_c, &(PWM_TIMER1.CCA), &(TCF0.CCB), &(ENC_TIMER2.CCA));
+	init_motor(&motor_d, &(PWM_TIMER1.CCC), &(TCF0.CCD), &(ENC_TIMER3.CCA));
 }
 
 

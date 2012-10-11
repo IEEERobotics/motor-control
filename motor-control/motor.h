@@ -22,6 +22,8 @@ typedef struct motor motor_t;
 
 #define PWM_PERIOD 10000
 
+#define PWM_PORT0		PORTD
+#define PWM_PORT1		PORTF
 #define PWM_TIMER0  	TCD0
 #define PWM_TIMER1  	TCF0
 #define ENC_TIMER0  	TCC1
