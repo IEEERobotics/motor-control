@@ -1,7 +1,5 @@
 .DS_Store
 
-*.prefs
-
 *.d
 
 *.o
