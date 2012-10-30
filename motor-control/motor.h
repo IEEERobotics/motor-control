@@ -30,8 +30,6 @@ typedef struct motor motor_t;
 #define ENC_TIMER1  	TCD1
 #define ENC_TIMER2  	TCE1
 #define ENC_TIMER3  	TCF1
-#define MS_TIMER    	TCE0
-#define MS_TIMER_PER	5		// Period of MS_TIMER in milliseconds
 #define NUM_SAMPLES 	256		// Number of samples to save in memory after changing the setpoint
 
 
@@ -100,14 +98,11 @@ extern motor_t motor_a, motor_b, motor_c, motor_d;
 
 void init_motor(motor_t *motor, register16_t *pwma, register16_t *pwmb, register16_t *enc);
 void init_motor_reg(motor_reg_t *reg, register16_t *pwma, register16_t *pwmb, register16_t *enc);
-void init_pwm_timer(TC0_t *timer);
-void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel);
 void init_motor_port(PORT_t *port);
 void change_setpoint(motor_t *motor, int sp);
 void change_direction(motor_t *motor, direction_t dir);
 void change_pwm(motor_t *motor, int pwm);
 void update_speed(motor_t *motor);
-void init_ms_timer(void);
 void init_motors(void);
 
 
