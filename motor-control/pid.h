@@ -20,12 +20,12 @@
  * Contains the state of a PID controller
  */
 typedef struct controller {
-	float p_const;		//!< P constant
-	float i_const;		//!< I constant
-	float d_const;		//!< D constant
-	int i_sum;			//!< Sum of all previous errors (basically a Riemann sum)
-	int i_sum_min;		//!< Max and min values for i_sum. This prevents "integral
-	int i_sum_max;		//   windup".
+	int p_const;		//!< P constant
+	int i_const;		//!< I constant
+	int d_const;		//!< D constant
+	long i_sum;			//!< Sum of all previous errors (basically a Riemann sum)
+	long i_sum_min;		//!< Max and min values for i_sum. This prevents "integral
+	long i_sum_max;		//   windup".
 	int prev_input;		//!< The last input, used for computing the derivative term
 	int setpoint;		//!< The value at which the controller will attempt to converge
 	char enabled;		//!< True if PID is enabled, otherwise false

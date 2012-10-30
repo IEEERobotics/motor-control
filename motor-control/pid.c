@@ -10,6 +10,7 @@
  * @todo Set up timer interrupt to run compute_pid()
  */
 
+#include <stdio.h>
 #include "motor.h"
 
 #define LIMIT(x, min, max)	((x) < (min)) ? (min) : (((x) > (max)) ? (max) : (x))
@@ -26,20 +27,20 @@
 void compute_pid(motor_t *motor)
 {
 	controller_t *pid = &(motor->controller);
-	int current_speed = (int) *(motor->reg.enc);
+	int current_speed = *(motor->reg.enc) ? (ENC_SAMPLE_HZ / (unsigned short int)*(motor->reg.enc)) : 0;
 	int error = pid->setpoint - current_speed;
-	float p, i, d;
+	int p, i, d;
 
 	pid->i_sum += error;
 	pid->i_sum = LIMIT(pid->i_sum, pid->i_sum_min, pid->i_sum_max);
 
 	p = pid->p_const * error;
 	i = pid->i_const * pid->i_sum;
-	d = pid->d_const * (current_speed - pid->prev_input);
+	d = pid->d_const * (error - pid->prev_input);
 
-	pid->prev_input = current_speed;
+	pid->prev_input = error;
 
-	motor->response.pwm = (int) p + i - d;
+	motor->response.pwm = LIMIT(p + i + d, 0, PWM_PERIOD);
 
 	if(motor->sample_counter < NUM_SAMPLES)
 	{
@@ -58,11 +59,12 @@ void compute_pid(motor_t *motor)
  */
 void init_controller(controller_t *controller)
 {
-	controller->d_const = 0;
-	controller->i_const = 0;
-	controller->p_const = 0;
-	controller->i_sum_min = -10000;
-	controller->i_sum_max = 10000;
+	controller->p_const = 20;
+	controller->i_const = 2;
+	controller->d_const = 5;
+
+	controller->i_sum_min = -10000000;
+	controller->i_sum_max = 10000000;
 
 	controller->i_sum = 0;
 	controller->prev_input = 0;
