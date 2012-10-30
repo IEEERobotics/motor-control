@@ -37,10 +37,10 @@
  * Pin 7: Encoder 3
  *
  * Port F (Header J1):
- * Pin 0: Motor D0
- * Pin 1: Motor D1
- * Pin 2: Motor C0
- * Pin 3: Motor C1
+ * Pin 0: Motor C0
+ * Pin 1: Motor D0
+ * Pin 2: Motor C1
+ * Pin 3: Motor D1
  * Pin 4: Encoder 4
  * Pin 5: Encoder 6
  * Pin 6: Encoder 5

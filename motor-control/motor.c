@@ -213,8 +213,8 @@ void init_motors(void)
 	/* Initialize the 4 motor_t structs */
 	init_motor(&motor_a, &(PWM_TIMER0.CCA), &(TCD0.CCB), &(ENC_TIMER0.CCA));
 	init_motor(&motor_b, &(PWM_TIMER0.CCC), &(TCD0.CCD), &(ENC_TIMER1.CCA));
-	init_motor(&motor_c, &(PWM_TIMER1.CCA), &(TCF0.CCB), &(ENC_TIMER2.CCA));
-	init_motor(&motor_d, &(PWM_TIMER1.CCC), &(TCF0.CCD), &(ENC_TIMER3.CCA));
+	init_motor(&motor_c, &(PWM_TIMER1.CCA), &(TCF0.CCC), &(ENC_TIMER2.CCA));
+	init_motor(&motor_d, &(PWM_TIMER1.CCB), &(TCF0.CCD), &(ENC_TIMER3.CCA));
 }
 
 

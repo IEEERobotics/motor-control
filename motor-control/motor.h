@@ -20,8 +20,8 @@ typedef struct motor motor_t;
 #include <avr/io.h>
 #include "pid.h"
 
-#define PWM_PERIOD 10000
-
+#define PWM_PERIOD 		10000
+#define ENC_SAMPLE_HZ	(32000000/64)
 #define PWM_PORT0		PORTD
 #define PWM_PORT1		PORTF
 #define PWM_TIMER0  	TCD0
