@@ -339,12 +339,15 @@ void print_status(motor_t *motor)
 		return;
 	}
 
-	puts("t,pwm,speed");
+	puts("pwm speed");
+	printf("[");
 
 	for(i=0; i<NUM_SAMPLES; i++)
 	{
-		printf("%d,%u,%u\n", i, motor->samples[i].pwm, motor->samples[i].enc);
+		printf("%u %u\n", motor->samples[i].pwm, motor->samples[i].enc);
 	}
+
+	printf("]\n");
 }
 
 
