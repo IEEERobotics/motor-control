@@ -13,12 +13,25 @@
 #include <string.h>
 #include <ctype.h>
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include "motor.h"
+#include "buffer.h"
 #include "serial.h"
 
+
 #define UART USARTC0
-#define USE_DOS_NEWLINES		// Use CRLF line endings
-#define UART_ECHO_ON			// Echo received characters back to the terminal
+#define UART_DREINTLVL	USART_DREINTLVL_MED_gc	// Data Register Empty interrupt priority
+#define USE_DOS_NEWLINES						// Use CRLF line endings
+#define BACKSPACE	'\b'
+#define BUFFER_SIZE		128						// UART read and write buffer size
+//#define UART_ECHO_ON					// Echo received characters back to the terminal
+
+
+/**
+ * Serial read and write buffers
+ */
+buffer_t read_buffer, write_buffer;
+volatile uint8_t read_buffer_data[BUFFER_SIZE], write_buffer_data[BUFFER_SIZE];
 
 
 /**
@@ -65,9 +78,17 @@ FILE uart_in, uart_out;
  */
 void init_serial()
 {
+	// Initialize buffers
+	buffer_init(&read_buffer, read_buffer_data, BUFFER_SIZE);
+	buffer_init(&write_buffer, write_buffer_data, BUFFER_SIZE);
+
 	// Set up port pins
 	PORTC.DIRSET = PIN3_bm;
 	PORTC.DIRCLR = PIN2_bm;
+
+	// Set interrupt priority levels
+	UART.CTRLA = USART_RXCINTLVL_MED_gc
+			   | USART_DREINTLVL_OFF_gc;
 
 	// Enable transmit and receive on the UART
 	UART.CTRLB = USART_RXEN_bm
@@ -92,6 +113,10 @@ void init_serial()
 	stdin = &uart_in;
 	stdout = &uart_out;
 	stderr = &uart_out;
+
+	// Enable medium-priority interrupts
+	PMIC.CTRL |= PMIC_MEDLVLEN_bm;
+	sei();
 }
 
 
@@ -112,8 +137,11 @@ int uart_putchar(char c, FILE *f)
 		uart_putchar('\r', stdout);
 #endif
 
-	while((UART.STATUS & USART_DREIF_bm) == 0);		// Block until ready to transmit
-	UART.DATA = c;
+	buffer_put(&write_buffer, c);
+
+	// Enable Data Register Empty interrupt. This will be disabled once all of the data
+	// in write_buffer has been sent.
+	UART.CTRLA = (UART.CTRLA & ~USART_DREINTLVL_gm) | UART_DREINTLVL;
 
 	return c;
 }
@@ -130,17 +158,13 @@ int uart_putchar(char c, FILE *f)
  */
 int uart_getchar(FILE *f)
 {
+	uint8_t c;
+
+	while(! buffer_get(&read_buffer, &c));	// Block while read_buffer is empty
 #ifdef UART_ECHO_ON
-	char c;
+	uart_putchar(c);
 #endif
-	while((UART.STATUS & USART_RXCIF_bm) == 0);		// Block until character is received
-#ifdef UART_ECHO_ON
-	c = UART.DATA;
-	uart_putchar(c, NULL);
 	return (int) c;
-#else
-	return (int) UART.DATA;
-#endif
 }
 
 
@@ -229,19 +253,29 @@ void parse_command(void)
 {
 	char input[16];
 	char *tok;
-	int i;
+	int i = 0;
+	char c;
 	motor_t *motor;
 
-	for(i=0; i<15; i++)
+	while((c = getchar()) != '\n')
 	{
-		input[i] = getchar();
-
-		if(input[i] == '\n' || input[i] == '\r')
-			break;
+		if(i < 15 && isprint(c))
+		{
+			input[i++] = c;
+			putchar(c);
+		}
+		else if(c == BACKSPACE && i > 0)
+		{
+			i--;
+			putchar(BACKSPACE);
+		}
 	}
 
-	input[i] = '\0';
 	printf("\n");
+	if(i == 0)
+		return;		// Empty string
+
+	input[i] = '\0';
 	tolower_str(input);
 
 	switch(find_token(strtok(input, delimiters)))
@@ -351,6 +385,14 @@ void print_status(motor_t *motor)
 }
 
 
+/**
+ * Run a motor at a specified duty cycle.
+ * Calling this function will disable the PID controller associated with the given motor.
+ *
+ * @param motor The motor to operate on
+ * @param pwm The duty cycle, within the range 0 to PWM_PERIOD. A negative sign indicates
+ * 			  that the motor should be ran in reverse, and 0 indicates a hard brake.
+ */
 void run_pwm(motor_t *motor, int pwm)
 {
 	motor->controller.enabled = 0;
@@ -375,6 +417,13 @@ void run_pwm(motor_t *motor, int pwm)
 }
 
 
+/**
+ * Change the PID setpoint of a motor.
+ * Calling this function will enable the PID controller associated with the motor.
+ *
+ * @param motor The motor to operate on
+ * @param sp The setpoint to change the motor to
+ */
 void run_pid(motor_t *motor, int sp)
 {
 	if(sp > 0)
@@ -394,4 +443,33 @@ void run_pid(motor_t *motor, int sp)
 	}
 
 	motor->controller.enabled = 1;
+}
+
+
+/**
+ * Data Register Empty ISR
+ *
+ * This ISR is called whenever the UART is ready to transmit the next byte, and it has
+ * been enabled in uart_putchar(). This interrupt is disabled as soon as write_buffer
+ * becomes empty (or else it would be called continuously).
+ */
+ISR(USARTC0_DRE_vect)
+{
+	uint8_t c;
+
+	if(buffer_get(&write_buffer, &c))
+		UART.DATA = c;
+	else
+		UART.CTRLA = (UART.CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc;
+}
+
+
+/**
+ * Receive Complete ISR
+ *
+ * This ISR is called whenever the UART has received a byte.
+ */
+ISR(USARTC0_RXC_vect)
+{
+	buffer_put(&read_buffer, UART.DATA);
 }
