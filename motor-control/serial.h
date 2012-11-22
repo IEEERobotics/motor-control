@@ -26,22 +26,23 @@ typedef enum token {
 	TOKEN_HEADING	= 4,
 	TOKEN_HELP 		= 5,
 	TOKEN_PWM		= 6,
-	TOKEN_SET 		= 7,
-	TOKEN_STATUS 	= 8,
+	TOKEN_SERVO		= 7,
+	TOKEN_SET 		= 8,
+	TOKEN_STATUS 	= 9,
 } token_t;
 
 
 void init_serial();
 int uart_putchar(char c, FILE *f);
 int uart_getchar(FILE *f);
-void tolower_str(char *str);
-token_t find_token(char *token);
-void parse_command(void);
+//void tolower_str(char *str);
+//token_t find_token(char *token);
+//void parse_command(void);
 void test_serial_out(void);
 void print_banner(void);
 void get_command(void);
-void print_status(motor_t *motor);
-void run_pwm(motor_t *motor, int pwm);
-void run_pid(motor_t *motor, int sp);
+//void print_status(motor_t *motor);
+//void run_pwm(motor_t *motor, int pwm);
+//void run_pid(motor_t *motor, int sp);
 
 #endif /* SERIAL_STDIO_H_ */

@@ -16,9 +16,10 @@
 #include <avr/interrupt.h>
 #include "motor.h"
 #include "buffer.h"
+#include "servo.h"
 #include "serial.h"
 
-
+#define NEXT_TOKEN		(find_token(strtok(NULL, delimiters)))
 #define UART USARTC0
 #define UART_DREINTLVL	USART_DREINTLVL_MED_gc	// Data Register Empty interrupt priority
 #define USE_DOS_NEWLINES						// Use CRLF line endings
@@ -55,6 +56,7 @@ const char *tokens[] = { "a",
 					   	 "heading",
 					   	 "help",
 					   	 "pwm",
+					   	 "servo",
 					   	 "set",
 					   	 "status"
 };
@@ -169,21 +171,6 @@ int uart_getchar(FILE *f)
 
 
 /**
- * Convert a string to lowercase.
- *
- * @param str String to convert
- */
-void tolower_str(char *str)
-{
-	while(*str)
-	{
-		*str = (char) tolower((int) *str);
-		str++;
-	}
-}
-
-
-/**
  * Compare function used by bsearch in find_token.
  */
 static int comp_token(const void *a, const void *b)
@@ -200,7 +187,7 @@ static int comp_token(const void *a, const void *b)
  *
  * @return Index into the tokens array. See enum token, in serial.h.
  */
-token_t find_token(char *token)
+static inline token_t find_token(char *token)
 {
 	if(token == NULL)
 		return TOKEN_UNDEF;
@@ -219,10 +206,25 @@ token_t find_token(char *token)
 
 
 /**
+ * Convert a string to lowercase.
+ *
+ * @param str String to convert
+ */
+static inline void tolower_str(char *str)
+{
+	while(*str)
+	{
+		*str = (char) tolower((int) *str);
+		str++;
+	}
+}
+
+
+/**
  * Returns a pointer to the motor referenced by token, or NULL if the token
  * is not a motor.
  */
-motor_t *get_motor(token_t token)
+static inline motor_t *get_motor(token_t token)
 {
 	switch(token)
 	{
@@ -247,17 +249,139 @@ motor_t *get_motor(token_t token)
 
 
 /**
+ * Returns the servo_t corresponding to a given token, or SERVO_INVALID if the token
+ * can't be mapped to a servo.
+ */
+static inline servo_t get_servo(token_t token)
+{
+	switch(token)
+	{
+	case TOKEN_A:
+		return SERVO_A;
+		break;
+	case TOKEN_B:
+		return SERVO_B;
+		break;
+	case TOKEN_C:
+		return SERVO_C;
+		break;
+	case TOKEN_D:
+		return SERVO_D;
+		break;
+	default:
+		break;
+	}
+
+	return SERVO_INVALID;
+}
+
+
+/**
+ * Run a motor at a specified duty cycle.
+ * Calling this function will disable the PID controller associated with the given motor.
+ *
+ * @param motor The motor to operate on
+ * @param pwm The duty cycle, within the range 0 to PWM_PERIOD. A negative sign indicates
+ * 			  that the motor should be ran in reverse, and 0 indicates a hard brake.
+ */
+static inline void run_pwm(motor_t *motor, int pwm)
+{
+	motor->controller.enabled = 0;
+
+	if(pwm > 0)
+	{
+		change_pwm(motor, pwm);
+		change_direction(motor, DIR_FORWARD);
+	}
+	else if(pwm < 0)
+	{
+		change_pwm(motor, -pwm);
+		change_direction(motor, DIR_REVERSE);
+	}
+	else
+	{
+		change_pwm(motor, 0);
+		change_direction(motor, DIR_BRAKE);
+	}
+
+	update_speed(motor);
+}
+
+
+/**
+ * Change the PID setpoint of a motor.
+ * Calling this function will enable the PID controller associated with the motor.
+ *
+ * @param motor The motor to operate on
+ * @param sp The setpoint to change the motor to
+ */
+static inline void run_pid(motor_t *motor, int sp)
+{
+	if(sp > 0)
+	{
+		change_setpoint(motor, sp);
+		change_direction(motor, DIR_FORWARD);
+	}
+	else if(sp < 0)
+	{
+		change_setpoint(motor, -sp);
+		change_direction(motor, DIR_REVERSE);
+	}
+	else
+	{
+		change_setpoint(motor, 0);
+		change_direction(motor, DIR_BRAKE);
+	}
+
+	motor->controller.enabled = 1;
+}
+
+
+/**
+ * Print the first NUM_SAMPLES after last changing the setpoint of motor
+ */
+static inline void print_status(motor_t *motor)
+{
+	int i;
+
+	if(motor == NULL)
+	{
+		puts(bad_motor);
+		return;
+	}
+
+	if(motor->sample_counter < NUM_SAMPLES)
+	{
+		printf("The sample buffer is not yet full. Only %d out of %d samples have been "
+			   "collected so far.\n", motor->sample_counter+1, NUM_SAMPLES);
+		return;
+	}
+
+	puts("pwm speed");
+	printf("[");
+
+	for(i=0; i<NUM_SAMPLES; i++)
+	{
+		printf("%u %u\n", motor->samples[i].pwm, motor->samples[i].enc);
+	}
+
+	printf("]\n");
+}
+
+
+/**
  * Read a command from the serial terminal and parse it.
  */
-void parse_command(void)
+static inline void parse_command(void)
 {
 	char input[16];
 	char *tok;
 	int i = 0;
 	char c;
 	motor_t *motor;
+	servo_t servo;
 
-	while((c = getchar()) != '\n')
+	while((c = getchar()) != '\r')
 	{
 		if(i < 15 && isprint(c))
 		{
@@ -287,7 +411,7 @@ void parse_command(void)
 		puts(help);
 		break;
 	case TOKEN_PWM:
-		motor = get_motor(find_token(strtok(NULL, delimiters)));
+		motor = get_motor(NEXT_TOKEN);
 		tok = strtok(NULL, delimiters);
 
 		if(motor != NULL && tok != NULL)
@@ -297,8 +421,17 @@ void parse_command(void)
 		else
 			puts(error);
 		break;
+	case TOKEN_SERVO:
+		servo = get_servo(NEXT_TOKEN);
+		tok = strtok(NULL, delimiters);
+
+		if(! set_angle(servo, atoi(tok)))
+		{
+			puts(error);
+		}
+		break;
 	case TOKEN_SET:
-		motor = get_motor(find_token(strtok(NULL, delimiters)));
+		motor = get_motor(NEXT_TOKEN);
 		tok = strtok(NULL, delimiters);
 
 		if(motor != NULL && tok != NULL)
@@ -309,7 +442,7 @@ void parse_command(void)
 			puts(error);
 		break;
 	case TOKEN_STATUS:
-		motor = get_motor(find_token(strtok(NULL, delimiters)));
+		motor = get_motor(NEXT_TOKEN);
 		if(motor != NULL)
 			print_status(motor);
 		else
@@ -350,99 +483,6 @@ void test_serial_out(void)
 	{
 		puts("Hello, world!");
 	}
-}
-
-
-/**
- * Print the first NUM_SAMPLES after last changing the setpoint of motor
- */
-void print_status(motor_t *motor)
-{
-	int i;
-
-	if(motor == NULL)
-	{
-		puts(bad_motor);
-		return;
-	}
-
-	if(motor->sample_counter < NUM_SAMPLES)
-	{
-		printf("The sample buffer is not yet full. Only %d out of %d samples have been "
-			   "collected so far.\n", motor->sample_counter+1, NUM_SAMPLES);
-		return;
-	}
-
-	puts("pwm speed");
-	printf("[");
-
-	for(i=0; i<NUM_SAMPLES; i++)
-	{
-		printf("%u %u\n", motor->samples[i].pwm, motor->samples[i].enc);
-	}
-
-	printf("]\n");
-}
-
-
-/**
- * Run a motor at a specified duty cycle.
- * Calling this function will disable the PID controller associated with the given motor.
- *
- * @param motor The motor to operate on
- * @param pwm The duty cycle, within the range 0 to PWM_PERIOD. A negative sign indicates
- * 			  that the motor should be ran in reverse, and 0 indicates a hard brake.
- */
-void run_pwm(motor_t *motor, int pwm)
-{
-	motor->controller.enabled = 0;
-
-	if(pwm > 0)
-	{
-		change_pwm(motor, pwm);
-		change_direction(motor, DIR_FORWARD);
-	}
-	else if(pwm < 0)
-	{
-		change_pwm(motor, -pwm);
-		change_direction(motor, DIR_REVERSE);
-	}
-	else
-	{
-		change_pwm(motor, 0);
-		change_direction(motor, DIR_BRAKE);
-	}
-
-	update_speed(motor);
-}
-
-
-/**
- * Change the PID setpoint of a motor.
- * Calling this function will enable the PID controller associated with the motor.
- *
- * @param motor The motor to operate on
- * @param sp The setpoint to change the motor to
- */
-void run_pid(motor_t *motor, int sp)
-{
-	if(sp > 0)
-	{
-		change_setpoint(motor, sp);
-		change_direction(motor, DIR_FORWARD);
-	}
-	else if(sp < 0)
-	{
-		change_setpoint(motor, -sp);
-		change_direction(motor, DIR_REVERSE);
-	}
-	else
-	{
-		change_setpoint(motor, 0);
-		change_direction(motor, DIR_BRAKE);
-	}
-
-	motor->controller.enabled = 1;
 }
 
 
