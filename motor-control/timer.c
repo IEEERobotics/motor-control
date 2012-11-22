@@ -7,6 +7,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "motor.h"
+#include "servo.h"
 #include "timer.h"
 
 /**
@@ -71,12 +72,39 @@ void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel)
  */
 void init_ms_timer(void)
 {
-	MS_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;			// Clock source is system clock
+	MS_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;		// Clock source is system clock
 	MS_TIMER.CTRLB = TC_WGMODE_NORMAL_gc;		// Normal waveform generation mode
-	MS_TIMER.INTCTRLA = TC_OVFINTLVL_MED_gc;	// Medium priority interrupt
+	MS_TIMER.INTCTRLA = TC_OVFINTLVL_LO_gc;		// Low priority interrupt
 	MS_TIMER.PER = 500 * MS_TIMER_PER;			// Timer period
 
-	PMIC.CTRL |= PMIC_MEDLVLEN_bm;				// Enable medium level interrupts
+	PMIC.CTRL |= PMIC_LOLVLEN_bm;				// Enable low priority interrupts
+	sei();
+}
+
+
+void init_servo_timer(void)
+{
+	PORTA.DIRSET = PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm;
+
+	SERVO_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;
+	SERVO_TIMER.CTRLB = TC_WGMODE_NORMAL_gc
+					  | TC0_CCAEN_bm
+					  | TC0_CCBEN_bm
+					  | TC0_CCCEN_bm
+					  | TC0_CCDEN_bm;
+	SERVO_TIMER.CTRLD = TC_EVACT_OFF_gc | TC_EVSEL_OFF_gc;
+	SERVO_TIMER.PERBUF = 500 * SERVO_TIMER_PER;
+	SERVO_TIMER.CCABUF = 0;
+	SERVO_TIMER.CCBBUF = 0;
+	SERVO_TIMER.CCCBUF = 0;
+	SERVO_TIMER.CCDBUF = 0;
+	SERVO_TIMER.INTCTRLA = TC_OVFINTLVL_HI_gc;
+	SERVO_TIMER.INTCTRLB = TC_CCAINTLVL_HI_gc
+						 | TC_CCBINTLVL_HI_gc
+						 | TC_CCCINTLVL_HI_gc
+						 | TC_CCDINTLVL_HI_gc;
+
+	PMIC.CTRL |= PMIC_HILVLEN_bm;
 	sei();
 }
 
@@ -84,8 +112,10 @@ void init_ms_timer(void)
 /**
  * MS_TIMER interrupt service routine
  */
-ISR(TCE0_OVF_vect)
+ISR(TCC0_OVF_vect)
 {
+	PORTA.OUTSET = PIN4_bm;
+
 	if(motor_a.controller.enabled)
 	{
 		compute_pid(&motor_a);
@@ -110,4 +140,36 @@ ISR(TCE0_OVF_vect)
 		compute_pid(&motor_d);
 		update_speed(&motor_d);
 	}
+
+	PORTA.OUTCLR = PIN4_bm;
+}
+
+
+ISR(TCE0_OVF_vect)
+{
+	PORTA.OUTSET = PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm;
+}
+
+
+ISR(TCE0_CCA_vect)
+{
+	PORTA.OUTCLR = PIN0_bm;
+}
+
+
+ISR(TCE0_CCB_vect)
+{
+	PORTA.OUTCLR = PIN1_bm;
+}
+
+
+ISR(TCE0_CCC_vect)
+{
+	PORTA.OUTCLR = PIN2_bm;
+}
+
+
+ISR(TCE0_CCD_vect)
+{
+	PORTA.OUTCLR = PIN3_bm;
 }
