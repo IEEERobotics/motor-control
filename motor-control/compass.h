@@ -9,6 +9,7 @@
 #define COMPASS_H_
 
 #include <avr/io.h>
+#include <stdbool.h>
 
 #define COMPASS_TWI						TWIC
 #define COMPASS_TWI_PORT				PORTC
@@ -60,5 +61,20 @@
 #define COMPASS_OUTMODE_RAWY			2
 #define COMPASS_OUTMODE_X				3
 #define COMPASS_OUTMODE_Y				4
+
+void init_compass(void);
+bool compass_write_eeprom(uint8_t address, uint8_t data);
+bool compass_read_eeprom(uint8_t address, uint8_t *data);
+bool compass_write_ram(uint8_t address, uint8_t data);
+bool compass_read_ram(uint8_t address, uint8_t *data);
+bool compass_sleep(void);
+bool compass_wakeup(void);
+bool compass_update_bridge_offsets(void);
+bool compass_enter_calibration_mode(void);
+bool compass_exit_calibration_mode(void);
+bool compass_save_opmode(void);
+bool compass_get_data(uint16_t *data);
+bool compass_read(uint16_t *data);
+
 
 #endif /* COMPASS_H_ */

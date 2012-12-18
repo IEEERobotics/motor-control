@@ -201,7 +201,7 @@ bool compass_get_data(uint16_t *data)
 	uint8_t rx_data[2];
 	uint8_t tx_data[] = {COMPASS_GET_DATA};
 	bool result = send_receive(2, sizeof(tx_data), rx_data, tx_data);
-	data = rx_data[1] | (rx_data[0] << 8);
+	*data = rx_data[1] | (rx_data[0] << 8);
 	return result;
 }
 
@@ -215,12 +215,12 @@ bool compass_read(uint16_t *data)
 {
 	uint8_t rx_data[2];
 	bool result = send_receive(2, 0, rx_data, NULL);
-	data = rx_data[1] | (rx_data[0] << 8);
+	*data = rx_data[1] | (rx_data[0] << 8);
 	return result;
 }
 
 
-ISR(COMPASS_TWI_vect)
+ISR(COMPASS_TWI_VECT)
 {
 	TWI_MasterInterruptHandler(&twi);
 }
