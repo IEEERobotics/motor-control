@@ -50,8 +50,6 @@
  */
 
 #include <avr/io.h>
-#include "motor.h"
-#include "pid.h"
 #include "clock.h"
 #include "serial.h"
 #include "timer.h"
@@ -65,9 +63,7 @@
 int main()
 {
 	init_clock();		// Set up the system clock
-	init_motors();		// Set up everything to do with motor control
 	init_ms_timer();	// Initialize timer interrupt
-	init_servo_timer();
 	init_serial();		// Set up the UART
 	print_banner();		// Print welcome message to the serial port
 

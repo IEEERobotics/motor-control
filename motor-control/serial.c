@@ -14,9 +14,7 @@
 #include <ctype.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "motor.h"
 #include "buffer.h"
-#include "servo.h"
 #include "serial.h"
 
 #define NEXT_TOKEN		(find_token(strtok(NULL, delimiters)))
@@ -62,7 +60,7 @@ const char *tokens[] = { "a",
 };
 
 const char *prompt = "> ";
-const char *banner = "\fNCSU IEEE 2012 Hardware Team Motor Controller\n"
+const char *banner = "\fNCSU IEEE 2012 Hardware Team Sensors Controller\n"
 					 "Type \"help\" for a list of available commands.";
 const char *help = "Not implemented.";
 const char *error = "Bad command.";
