@@ -97,7 +97,7 @@ int parallax_set_angle(int channel, int angle, int ramp)
 					  	 '\r'
 	};
 
-	fprintf(uart_out, data);
+	fprintf(&uart_out, data);
 
 	return 1;
 }

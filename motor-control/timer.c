@@ -8,7 +8,9 @@
 #include <avr/interrupt.h>
 #include "motor.h"
 #include "servo.h"
+#include "compass.h"
 #include "timer.h"
+
 
 /**
  * Initializes a PWM timer
@@ -114,8 +116,6 @@ void init_servo_timer(void)
  */
 ISR(TCC0_OVF_vect)
 {
-	PORTA.OUTSET = PIN4_bm;
-
 	if(motor_a.controller.enabled)
 	{
 		compute_pid(&motor_a);
@@ -140,8 +140,6 @@ ISR(TCC0_OVF_vect)
 		compute_pid(&motor_d);
 		update_speed(&motor_d);
 	}
-
-	PORTA.OUTCLR = PIN4_bm;
 }
 
 
