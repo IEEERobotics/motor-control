@@ -7,8 +7,6 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "motor.h"
-#include "servo.h"
-#include "compass.h"
 #include "timer.h"
 
 
@@ -84,33 +82,6 @@ void init_ms_timer(void)
 }
 
 
-void init_servo_timer(void)
-{
-	PORTA.DIRSET = PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm;
-
-	SERVO_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;
-	SERVO_TIMER.CTRLB = TC_WGMODE_NORMAL_gc
-					  | TC0_CCAEN_bm
-					  | TC0_CCBEN_bm
-					  | TC0_CCCEN_bm
-					  | TC0_CCDEN_bm;
-	SERVO_TIMER.CTRLD = TC_EVACT_OFF_gc | TC_EVSEL_OFF_gc;
-	SERVO_TIMER.PERBUF = 500 * SERVO_TIMER_PER;
-	SERVO_TIMER.CCABUF = 0;
-	SERVO_TIMER.CCBBUF = 0;
-	SERVO_TIMER.CCCBUF = 0;
-	SERVO_TIMER.CCDBUF = 0;
-	SERVO_TIMER.INTCTRLA = TC_OVFINTLVL_HI_gc;
-	SERVO_TIMER.INTCTRLB = TC_CCAINTLVL_HI_gc
-						 | TC_CCBINTLVL_HI_gc
-						 | TC_CCCINTLVL_HI_gc
-						 | TC_CCDINTLVL_HI_gc;
-
-	PMIC.CTRL |= PMIC_HILVLEN_bm;
-	sei();
-}
-
-
 /**
  * MS_TIMER interrupt service routine
  */
@@ -140,34 +111,4 @@ ISR(TCC0_OVF_vect)
 		compute_pid(&motor_d);
 		update_speed(&motor_d);
 	}
-}
-
-
-ISR(TCE0_OVF_vect)
-{
-	PORTA.OUTSET = PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm;
-}
-
-
-ISR(TCE0_CCA_vect)
-{
-	PORTA.OUTCLR = PIN0_bm;
-}
-
-
-ISR(TCE0_CCB_vect)
-{
-	PORTA.OUTCLR = PIN1_bm;
-}
-
-
-ISR(TCE0_CCC_vect)
-{
-	PORTA.OUTCLR = PIN2_bm;
-}
-
-
-ISR(TCE0_CCD_vect)
-{
-	PORTA.OUTCLR = PIN3_bm;
 }

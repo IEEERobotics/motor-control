@@ -16,7 +16,6 @@
 #include <avr/interrupt.h>
 #include "motor.h"
 #include "buffer.h"
-#include "servo.h"
 #include "serial.h"
 
 #define NEXT_TOKEN		(find_token(strtok(NULL, delimiters)))
@@ -249,34 +248,6 @@ static inline motor_t *get_motor(token_t token)
 
 
 /**
- * Returns the servo_t corresponding to a given token, or SERVO_INVALID if the token
- * can't be mapped to a servo.
- */
-static inline servo_t get_servo(token_t token)
-{
-	switch(token)
-	{
-	case TOKEN_A:
-		return SERVO_A;
-		break;
-	case TOKEN_B:
-		return SERVO_B;
-		break;
-	case TOKEN_C:
-		return SERVO_C;
-		break;
-	case TOKEN_D:
-		return SERVO_D;
-		break;
-	default:
-		break;
-	}
-
-	return SERVO_INVALID;
-}
-
-
-/**
  * Run a motor at a specified duty cycle.
  * Calling this function will disable the PID controller associated with the given motor.
  *
@@ -379,7 +350,6 @@ static inline void parse_command(void)
 	int i = 0;
 	char c;
 	motor_t *motor;
-	servo_t servo;
 
 	while((c = getchar()) != '\r')
 	{
@@ -422,13 +392,7 @@ static inline void parse_command(void)
 			puts(error);
 		break;
 	case TOKEN_SERVO:
-		servo = get_servo(NEXT_TOKEN);
-		tok = strtok(NULL, delimiters);
-
-		if(! set_angle(servo, atoi(tok)))
-		{
-			puts(error);
-		}
+		puts("Not implemented.");
 		break;
 	case TOKEN_SET:
 		motor = get_motor(NEXT_TOKEN);
