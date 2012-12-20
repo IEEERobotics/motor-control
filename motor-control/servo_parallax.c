@@ -13,6 +13,9 @@
 #include "servo_parallax.h"
 
 #define UART 			USARTC1
+#define UART_DRE_VECT	USARTC1_DRE_vect
+#define TX_PIN			PIN7_bm
+#define RX_PIN			PIN6_bm
 #define UART_DREINTLVL	USART_DREINTLVL_MED_gc	// Data Register Empty interrupt priority
 #define BUFFER_SIZE		128
 
@@ -20,13 +23,18 @@ buffer_t write_buffer;
 volatile uint8_t write_buffer_data[BUFFER_SIZE];
 FILE uart_out;
 
+
+/**
+ * Initialize the Parallax servo controller.
+ */
 void init_servo_parallax()
 {
 	// Initialize buffer
 	buffer_init(&write_buffer, write_buffer_data, BUFFER_SIZE);
 
 	// Set up port pins
-	PORTC.DIRSET = PIN3_bm;
+	PORTC.DIRSET = TX_PIN;
+	PORTC.DIRCLR = RX_PIN;
 
 	// Set interrupt priority levels
 	UART.CTRLA = USART_DREINTLVL_OFF_gc;
@@ -77,6 +85,17 @@ int servo_uart_putchar(char c, FILE *f)
 }
 
 
+/**
+ * Set the angle of a servo.
+ *
+ * @param channel Servo channel (0-15)
+ * @param angle Angle (between 0 and 1000)
+ * @param ramp Rate at which to ramp the servo (between 0 and 63). 63 corresponds to
+ * 			   maximum ramping, and 0 disables this feature. This is "roughly linear,
+ * 			   but no equation exists to describe it" (see the Parallax servo controller
+ * 			   datasheet for details).
+ * 	@return True if successful, or false if bad input
+ */
 int parallax_set_angle(int channel, int angle, int ramp)
 {
 	if(angle < 0 || angle > 1000)
@@ -100,4 +119,22 @@ int parallax_set_angle(int channel, int angle, int ramp)
 	fprintf(&uart_out, data);
 
 	return 1;
+}
+
+
+/**
+ * Data Register Empty ISR
+ *
+ * This ISR is called whenever the UART is ready to transmit the next byte, and it has
+ * been enabled in uart_putchar(). This interrupt is disabled as soon as write_buffer
+ * becomes empty (or else it would be called continuously).
+ */
+ISR(UART_DRE_VECT)
+{
+	uint8_t c;
+
+	if(buffer_get(&write_buffer, &c))
+		UART.DATA = c;
+	else
+		UART.CTRLA = (UART.CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc;
 }
