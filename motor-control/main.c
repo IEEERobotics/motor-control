@@ -53,7 +53,8 @@
 #include "motor.h"
 #include "pid.h"
 #include "clock.h"
-#include "serial.h"
+#include "uart.h"
+#include "serial_interactive.h"
 #include "timer.h"
 #include "compass.h"
 
@@ -67,7 +68,7 @@ int main()
 	init_clock();		// Set up the system clock
 	init_motors();		// Set up everything to do with motor control
 	init_ms_timer();	// Initialize timer interrupt
-	init_serial();		// Set up the UART
+	init_uart();		// Set up the UART
 	print_banner();		// Print welcome message to the serial port
 
 	for(;;)
