@@ -74,7 +74,7 @@ void init_ultrasonic_struct(volatile ultrasonic_t *u,
 					 	 	uint8_t echo_bm,
 					 	 	EVSYS_CHMUX_t echo_chmux);
 void ping_ultrasonic(volatile ultrasonic_t *u);
-int get_ultrasonic_distance(ultrasonic_id_t index)
+int get_ultrasonic_distance(ultrasonic_id_t index);
 
 
 #endif /* ULTRASONIC_H_ */
