@@ -13,7 +13,7 @@
 #include "pid.h"
 #include "serial_interactive.h"
 
-#define NEXT_TOKEN		(find_token(strtok(NULL, delimiters)))
+#define NEXT_TOKEN()	(find_token(strtok(NULL, delimiters)))
 #define BACKSPACE		'\b'
 
 /**
@@ -48,6 +48,7 @@ const char *banner = "\fNCSU IEEE 2012 Hardware Team Motor Controller\n"
 const char *help = "Not implemented.";
 const char *error = "Bad command.";
 const char *bad_motor = "Bad motor.";
+const char *not_implemented = "Not implemented.";
 
 
 /**
@@ -128,96 +129,124 @@ static inline motor_t *get_motor(token_t token)
 }
 
 
-/**
- * Run a motor at a specified duty cycle.
- * Calling this function will disable the PID controller associated with the given motor.
- *
- * @param motor The motor to operate on
- * @param pwm The duty cycle, within the range 0 to PWM_PERIOD. A negative sign indicates
- * 			  that the motor should be ran in reverse, and 0 indicates a hard brake.
- */
-static inline void run_pwm(motor_t *motor, int pwm)
+static inline void exec_heading(void)
 {
-	motor->controller.enabled = 0;
-
-	if(pwm > 0)
-	{
-		change_pwm(motor, pwm);
-		change_direction(motor, DIR_FORWARD);
-	}
-	else if(pwm < 0)
-	{
-		change_pwm(motor, -pwm);
-		change_direction(motor, DIR_REVERSE);
-	}
-	else
-	{
-		change_pwm(motor, 0);
-		change_direction(motor, DIR_BRAKE);
-	}
-
-	update_speed(motor);
+	puts(not_implemented);
 }
 
 
-/**
- * Change the PID setpoint of a motor.
- * Calling this function will enable the PID controller associated with the motor.
- *
- * @param motor The motor to operate on
- * @param sp The setpoint to change the motor to
- */
-static inline void run_pid(motor_t *motor, int sp)
+static inline void exec_help(void)
 {
-	if(sp > 0)
-	{
-		change_setpoint(motor, sp);
-		change_direction(motor, DIR_FORWARD);
-	}
-	else if(sp < 0)
-	{
-		change_setpoint(motor, -sp);
-		change_direction(motor, DIR_REVERSE);
-	}
-	else
-	{
-		change_setpoint(motor, 0);
-		change_direction(motor, DIR_BRAKE);
-	}
-
-	motor->controller.enabled = 1;
+	puts(help);
 }
 
 
-/**
- * Print the first NUM_SAMPLES after last changing the setpoint of motor
- */
-static inline void print_status(motor_t *motor)
+static inline void exec_pwm(void)
+{
+	motor_t *motor = get_motor(NEXT_TOKEN());
+	char *tok = strtok(NULL, delimiters);
+	int pwm;
+
+	if(motor != NULL && tok != NULL)
+	{
+		pwm = atoi(tok);
+
+		motor->controller.enabled = 0;
+
+		if(pwm > 0)
+		{
+			change_pwm(motor, pwm);
+			change_direction(motor, DIR_FORWARD);
+		}
+		else if(pwm < 0)
+		{
+			change_pwm(motor, -pwm);
+			change_direction(motor, DIR_REVERSE);
+		}
+		else
+		{
+			change_pwm(motor, 0);
+			change_direction(motor, DIR_BRAKE);
+		}
+
+		update_speed(motor);
+	}
+	else if(motor == NULL)
+		puts(bad_motor);
+	else
+		puts(error);
+}
+
+
+static inline void exec_servo(void)
+{
+	puts(not_implemented);
+}
+
+
+static inline void exec_set(void)
+{
+	motor_t *motor = get_motor(NEXT_TOKEN());
+	char *tok = strtok(NULL, delimiters);
+	int sp;
+
+	if(motor != NULL && tok != NULL)
+	{
+		sp = atoi(tok);
+
+		if(sp > 0)
+		{
+			change_setpoint(motor, sp);
+			change_direction(motor, DIR_FORWARD);
+		}
+		else if(sp < 0)
+		{
+			change_setpoint(motor, -sp);
+			change_direction(motor, DIR_REVERSE);
+		}
+		else
+		{
+			change_setpoint(motor, 0);
+			change_direction(motor, DIR_BRAKE);
+		}
+
+		motor->controller.enabled = 1;
+	}
+	else if(motor == NULL)
+		puts(bad_motor);
+	else
+		puts(error);
+}
+
+
+static inline void exec_status(void)
 {
 	int i;
+	motor_t *motor = get_motor(NEXT_TOKEN());
 
-	if(motor == NULL)
+	if(motor != NULL)
+	{
+		if(motor->sample_counter < NUM_SAMPLES)
+		{
+			printf("The sample buffer is not yet full. Only %d out of %d samples have been "
+				   "collected so far.\n", motor->sample_counter+1, NUM_SAMPLES);
+			return;
+		}
+
+		puts("pwm speed");
+		printf("[");
+
+		for(i=0; i<NUM_SAMPLES; i++)
+		{
+			printf("%u %u\n", motor->samples[i].pwm, motor->samples[i].enc);
+		}
+
+		printf("]\n");
+	}
+	else
 	{
 		puts(bad_motor);
-		return;
 	}
-
-	if(motor->sample_counter < NUM_SAMPLES)
-	{
-		printf("The sample buffer is not yet full. Only %d out of %d samples have been "
-			   "collected so far.\n", motor->sample_counter+1, NUM_SAMPLES);
-		return;
-	}
-
-	puts("pwm speed");
-	printf("[");
-
-	for(i=0; i<NUM_SAMPLES; i++)
-	{
-		printf("%u %u\n", motor->samples[i].pwm, motor->samples[i].enc);
-	}
-
-	printf("]\n");
 }
 
 
@@ -227,10 +256,8 @@ static inline void print_status(motor_t *motor)
 static inline void parse_command(void)
 {
 	char input[16];
-	char *tok;
 	int i = 0;
 	char c;
-	motor_t *motor;
 
 	while((c = getchar()) != '\r')
 	{
@@ -256,42 +283,22 @@ static inline void parse_command(void)
 	switch(find_token(strtok(input, delimiters)))
 	{
 	case TOKEN_HEADING:
-		puts("Not implemented");
+		exec_heading();
 		break;
 	case TOKEN_HELP:
-		puts(help);
+		exec_help();
 		break;
 	case TOKEN_PWM:
-		motor = get_motor(NEXT_TOKEN);
-		tok = strtok(NULL, delimiters);
-
-		if(motor != NULL && tok != NULL)
-			run_pwm(motor, atoi(tok));
-		else if(motor == NULL)
-			puts(bad_motor);
-		else
-			puts(error);
+		exec_pwm();
 		break;
 	case TOKEN_SERVO:
-		puts("Not implemented.");
+		exec_servo();
 		break;
 	case TOKEN_SET:
-		motor = get_motor(NEXT_TOKEN);
-		tok = strtok(NULL, delimiters);
-
-		if(motor != NULL && tok != NULL)
-			run_pid(motor, atoi(tok));
-		else if(motor == NULL)
-			puts(bad_motor);
-		else
-			puts(error);
+		exec_set();
 		break;
 	case TOKEN_STATUS:
-		motor = get_motor(NEXT_TOKEN);
-		if(motor != NULL)
-			print_status(motor);
-		else
-			puts(bad_motor);
+		exec_status();
 		break;
 	default:
 		puts(error);
