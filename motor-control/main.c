@@ -73,7 +73,7 @@ int main()
 
 	for(;;)
 	{
-		get_command();	// Get the next serial command and run it
+		get_command_interactive();	// Get the next serial command and run it
 
 		//__asm__ __volatile("nop");
 	}

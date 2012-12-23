@@ -310,7 +310,7 @@ static inline void parse_command(void)
 /**
  * Print a prompt to stdout, then parse and execute a command from stdin.
  */
-void get_command(void)
+void get_command_interactive(void)
 {
 	printf(prompt);
 	parse_command();

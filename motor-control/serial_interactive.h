@@ -28,6 +28,6 @@ typedef enum token {
 
 void test_serial_out(void);
 void print_banner(void);
-void get_command(void);
+void get_command_interactive(void);
 
 #endif /* SERIAL_INTERACTIVE_H_ */
