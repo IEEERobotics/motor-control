@@ -8,6 +8,6 @@
 #ifndef SERIAL_PANDABOARD_H_
 #define SERIAL_PANDABOARD_H_
 
-
+void get_command_pandaboard(void);
 
 #endif /* SERIAL_PANDABOARD_H_ */
