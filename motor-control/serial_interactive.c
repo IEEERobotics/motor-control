@@ -14,6 +14,7 @@
 #include "serial_interactive.h"
 
 #define NEXT_TOKEN()	(find_token(strtok(NULL, delimiters)))
+#define NEXT_STRING()	(strtok(NULL, delimiters))
 #define BACKSPACE		'\b'
 
 /**
@@ -180,7 +181,18 @@ static inline void exec_pwm(void)
 
 static inline void exec_servo(void)
 {
-	puts(not_implemented);
+	char *channel = NEXT_STRING();
+	char *ramp = NEXT_STRING();
+	char *angle = NEXT_STRING();
+
+	if(channel != NULL && ramp != NULL && angle != NULL)
+	{
+		parallax_set_angle(atoi(channel), atoi(angle), atoi(ramp));
+	}
+	else
+	{
+		puts(error);
+	}
 }
 
 
