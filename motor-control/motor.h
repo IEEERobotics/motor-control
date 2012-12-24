@@ -92,6 +92,7 @@ struct motor {
 	controller_t controller;
 	sample_t samples[NUM_SAMPLES];
 	short int sample_counter;
+	int encoder_count;
 };
 
 extern motor_t motor_a, motor_b, motor_c, motor_d;

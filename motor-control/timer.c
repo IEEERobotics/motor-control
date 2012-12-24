@@ -56,6 +56,7 @@ void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel)
 	timer->CTRLA = TC_CLKSEL_DIV64_gc;
 	timer->CTRLB = TC_WGMODE_NORMAL_gc | TC1_CCAEN_bm;
 	timer->CTRLD = TC_EVACT_FRQ_gc | event_channel;
+	timer->INTCTRLB = TC_CCAINTLVL_HI_gc;
 	timer->PERBUF = 0xffff;
 }
 
@@ -111,4 +112,28 @@ ISR(TCC0_OVF_vect)
 		compute_pid(&motor_d);
 		update_speed(&motor_d);
 	}
+}
+
+
+ISR(TCC1_CCA_vect)
+{
+	motor_a.encoder_count++;
+}
+
+
+ISR(TCD1_CCA_vect)
+{
+	motor_b.encoder_count++;
+}
+
+
+ISR(TCE1_CCA_vect)
+{
+	motor_c.encoder_count++;
+}
+
+
+ISR(TCF1_CCA_vect)
+{
+	motor_d.encoder_count++;
 }

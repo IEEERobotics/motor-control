@@ -108,6 +108,7 @@ void init_motor(motor_t *motor,
 	init_motor_response(&(motor->response));
 	init_controller(&(motor->controller));
 	motor->sample_counter = 0;
+	motor->encoder_count = 0;
 }
 
 
