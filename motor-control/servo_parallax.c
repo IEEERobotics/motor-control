@@ -25,6 +25,28 @@ FILE uart_out;
 
 
 /**
+ * Write a character to the UART. This function is connected to the uart_out FILE stream,
+ * which is set to stdout and stderr.
+ *
+ * @param c Character to transmit
+ * @param f FILE pointer to operate on. This parameter is ignored, but is required by
+ * 			stdio.
+ *
+ * @return Character that was transmitted, casted to an int.
+ */
+int servo_uart_putchar(char c, FILE *f)
+{
+	buffer_put(&write_buffer, c);
+
+	// Enable Data Register Empty interrupt. This will be disabled once all of the data
+	// in write_buffer has been sent.
+	UART.CTRLA = (UART.CTRLA & ~USART_DREINTLVL_gm) | UART_DREINTLVL;
+
+	return c;
+}
+
+
+/**
  * Initialize the Parallax servo controller.
  */
 void init_servo_parallax()
@@ -60,28 +82,6 @@ void init_servo_parallax()
 	// Enable medium-priority interrupts
 	PMIC.CTRL |= PMIC_MEDLVLEN_bm;
 	sei();
-}
-
-
-/**
- * Write a character to the UART. This function is connected to the uart_out FILE stream,
- * which is set to stdout and stderr.
- *
- * @param c Character to transmit
- * @param f FILE pointer to operate on. This parameter is ignored, but is required by
- * 			stdio.
- *
- * @return Character that was transmitted, casted to an int.
- */
-int servo_uart_putchar(char c, FILE *f)
-{
-	buffer_put(&write_buffer, c);
-
-	// Enable Data Register Empty interrupt. This will be disabled once all of the data
-	// in write_buffer has been sent.
-	UART.CTRLA = (UART.CTRLA & ~USART_DREINTLVL_gm) | UART_DREINTLVL;
-
-	return c;
 }
 
 

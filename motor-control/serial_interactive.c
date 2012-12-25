@@ -11,6 +11,7 @@
 #include <string.h>
 #include "motor.h"
 #include "pid.h"
+#include "servo_parallax.h"
 #include "serial_interactive.h"
 
 #define NEXT_TOKEN()	(find_token(strtok(NULL, delimiters)))

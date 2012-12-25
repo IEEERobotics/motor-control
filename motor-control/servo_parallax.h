@@ -9,6 +9,6 @@
 #define SERVO_PARALLAX_H_
 
 void init_servo_parallax();
-int servo_uart_putchar(char c, FILE *f);
+int parallax_set_angle(int channel, int angle, int ramp);
 
 #endif /* SERVO_PARALLAX_H_ */
