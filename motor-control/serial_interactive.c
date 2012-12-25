@@ -38,6 +38,7 @@ const char *tokens[] = { "a",
 					   	 "heading",
 					   	 "help",
 					   	 "pwm",
+					   	 "sensors",
 					   	 "servo",
 					   	 "set",
 					   	 "status"
@@ -46,7 +47,13 @@ const char *tokens[] = { "a",
 const char *prompt = "> ";
 const char *banner = "\fNCSU IEEE 2012 Hardware Team Motor Controller\n"
 					 "Type \"help\" for a list of available commands.";
-const char *help = "Not implemented.";
+const char *help = "heading [angle]\n"
+				   "help\n"
+				   "pwm [a|b|c|d] [0-10000]\n"
+				   "sensors\n"
+				   "servo [0-15] [0-1000]\n"
+				   "set [a|b|c|d] [sp]\n"
+				   "status\n";
 const char *error = "Bad command.";
 const char *bad_motor = "Bad motor.";
 const char *not_implemented = "Not implemented.";
@@ -179,6 +186,12 @@ static inline void exec_pwm(void)
 }
 
 
+static inline void exec_sensors(void)
+{
+	puts(not_implemented);
+}
+
+
 static inline void exec_servo(void)
 {
 	char *channel = NEXT_STRING();
@@ -302,6 +315,9 @@ static inline void parse_command(void)
 		break;
 	case TOKEN_PWM:
 		exec_pwm();
+		break;
+	case TOKEN_SENSORS:
+		exec_sensors();
 		break;
 	case TOKEN_SERVO:
 		exec_servo();
