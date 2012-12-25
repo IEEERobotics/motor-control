@@ -57,14 +57,18 @@ void compute_pid(motor_t *motor)
  * @param controller Controller to initialize
  *
  */
-void init_controller(controller_t *controller)
+void init_controller(controller_t *controller,
+					 int p_const,
+					 int i_const,
+					 int d_const,
+					 long i_sum_min,
+					 long i_sum_max)
 {
-	controller->p_const = 20;
-	controller->i_const = 2;
-	controller->d_const = 5;
-
-	controller->i_sum_min = -10000000;
-	controller->i_sum_max = 10000000;
+	controller->p_const = p_const;
+	controller->i_const = i_const;
+	controller->d_const = d_const;
+	controller->i_sum_min = i_sum_min;
+	controller->i_sum_max = i_sum_max;
 
 	controller->i_sum = 0;
 	controller->prev_input = 0;

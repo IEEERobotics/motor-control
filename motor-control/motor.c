@@ -106,7 +106,12 @@ void init_motor(motor_t *motor,
 {
 	init_motor_reg(&(motor->reg), pwma, pwmb, enc);
 	init_motor_response(&(motor->response));
-	init_controller(&(motor->controller));
+	init_controller(&(motor->controller),
+					PID_MOTOR_KP,
+					PID_MOTOR_KI,
+					PID_MOTOR_KD,
+					PID_MOTOR_ISUM_MIN,
+					PID_MOTOR_ISUM_MAX);
 	motor->sample_counter = 0;
 	motor->encoder_count = 0;
 }

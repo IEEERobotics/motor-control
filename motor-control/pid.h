@@ -14,6 +14,12 @@
 
 #include "motor.h"
 
+#define PID_MOTOR_KP			20
+#define PID_MOTOR_KI			2
+#define PID_MOTOR_KD			5
+#define PID_MOTOR_ISUM_MIN		-10000000
+#define PID_MOTOR_ISUM_MAX		10000000
+
 /**
  * @struct controller
  *
