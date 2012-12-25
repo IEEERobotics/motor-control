@@ -90,26 +90,26 @@ ISR(TCC0_OVF_vect)
 {
 	if(motor_a.controller.enabled)
 	{
-		compute_pid(&motor_a);
+		compute_motor_pid(&motor_a);
 		update_speed(&motor_a);
 	}
 
 	if(motor_b.controller.enabled)
 	{
-		compute_pid(&motor_b);
+		compute_motor_pid(&motor_b);
 		update_speed(&motor_b);
 
 	}
 
 	if(motor_c.controller.enabled)
 	{
-		compute_pid(&motor_c);
+		compute_motor_pid(&motor_c);
 		update_speed(&motor_c);
 	}
 
 	if(motor_d.controller.enabled)
 	{
-		compute_pid(&motor_d);
+		compute_motor_pid(&motor_d);
 		update_speed(&motor_d);
 	}
 }

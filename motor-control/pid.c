@@ -19,12 +19,8 @@
  * Updates the motor response using a PID algorithm
  *
  * @param motor Motor to update
- *
- * @todo Implement this function.
- * @todo Verify that this code meets real-time processing constraints when
- * 		 using floating-point arithmetic
  */
-void compute_pid(motor_t *motor)
+void compute_motor_pid(motor_t *motor)
 {
 	controller_t *pid = &(motor->controller);
 	int current_speed = *(motor->reg.enc) ? (ENC_SAMPLE_HZ / (unsigned short int)*(motor->reg.enc)) : 0;

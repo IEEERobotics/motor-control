@@ -37,8 +37,13 @@ typedef struct controller {
 	char enabled;		//!< True if PID is enabled, otherwise false
 } controller_t;
 
-void compute_pid(motor_t *motor);
-void init_controller(controller_t *controller);
+void compute_motor_pid(motor_t *motor);
+void init_controller(controller_t *controller,
+					 int p_const,
+					 int i_const,
+					 int d_const,
+					 long i_sum_min,
+					 long i_sum_max);
 void change_setpoint(motor_t *motor, int sp);
 
 #endif /* PID_H_ */
