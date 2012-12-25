@@ -15,17 +15,18 @@
 
 #define LIMIT(x, min, max)	((x) < (min)) ? (min) : (((x) > (max)) ? (max) : (x))
 
+
 /**
- * Updates the motor response using a PID algorithm
+ * More abstract implementation of a PID controller
  *
- * @param motor Motor to update
+ * @param pid Pointer to a controller_t struct
+ * @param current_value Output from plant
+ * @return Input to plant
  */
-void compute_motor_pid(motor_t *motor)
+static inline int compute_pid(controller_t *pid, int current_value)
 {
-	controller_t *pid = &(motor->controller);
-	int current_speed = *(motor->reg.enc) ? (ENC_SAMPLE_HZ / (unsigned short int)*(motor->reg.enc)) : 0;
-	int error = pid->setpoint - current_speed;
 	int p, i, d;
+	int error = pid->setpoint - current_value;
 
 	pid->i_sum += error;
 	pid->i_sum = LIMIT(pid->i_sum, pid->i_sum_min, pid->i_sum_max);
@@ -36,7 +37,22 @@ void compute_motor_pid(motor_t *motor)
 
 	pid->prev_input = error;
 
-	motor->response.pwm = LIMIT(p + i + d, 0, PWM_PERIOD);
+	return p + i + d;
+}
+
+
+/**
+ * Updates the motor response using a PID algorithm
+ *
+ * @param motor Motor to update
+ */
+void compute_motor_pid(motor_t *motor)
+{
+	controller_t *pid = &(motor->controller);
+	int current_speed = *(motor->reg.enc) ? (ENC_SAMPLE_HZ / (unsigned short int)*(motor->reg.enc)) : 0;
+	int plant = compute_pid(pid, error);
+
+	motor->response.pwm = LIMIT(plant, 0, PWM_PERIOD);
 
 	if(motor->sample_counter < NUM_SAMPLES)
 	{
