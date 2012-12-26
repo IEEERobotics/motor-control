@@ -76,8 +76,8 @@ typedef struct motor_response {
 
 
 typedef struct sample {
-	short unsigned int pwm;
-	short unsigned int enc;
+	volatile short unsigned int pwm;
+	volatile short unsigned int enc;
 } sample_t;
 
 
@@ -91,8 +91,8 @@ struct motor {
 	motor_response_t response;
 	controller_t controller;
 	sample_t samples[NUM_SAMPLES];
-	short int sample_counter;
-	int encoder_count;
+	volatile short int sample_counter;
+	volatile int encoder_count;
 };
 
 extern motor_t motor_a, motor_b, motor_c, motor_d;

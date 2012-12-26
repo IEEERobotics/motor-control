@@ -18,9 +18,9 @@
  */
 typedef struct buffer {
 	volatile uint8_t *data;
-	volatile int head;
-	volatile int tail;
-	int size;
+	volatile uint8_t head;
+	volatile uint8_t tail;
+	uint8_t size;
 } buffer_t;
 
 

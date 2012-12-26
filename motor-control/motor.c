@@ -33,6 +33,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 #include "motor.h"
 #include "pid.h"
 #include "timer.h"
@@ -178,7 +179,10 @@ void change_direction(motor_t *motor, direction_t dir)
  */
 void change_pwm(motor_t *motor, int pwm)
 {
-	motor->response.pwm = pwm;
+	ATOMIC_BLOCK(ATOMIC_FORCEON)
+	{
+		motor->response.pwm = pwm;
+	}
 }
 
 
@@ -192,19 +196,22 @@ void change_pwm(motor_t *motor, int pwm)
  */
 void update_speed(motor_t *motor)
 {
-	switch(motor->response.dir)
+	ATOMIC_BLOCK(ATOMIC_FORCEON)
 	{
-	case DIR_BRAKE:
-		*(motor->reg.pwma) = 0;
-		*(motor->reg.pwmb) = 0;
-		break;
-	case DIR_FORWARD:
-		*(motor->reg.pwma) = motor->response.pwm;
-		*(motor->reg.pwmb) = 0;
-		break;
-	case DIR_REVERSE:
-		*(motor->reg.pwma) = 0;
-		*(motor->reg.pwmb) = motor->response.pwm;
-		break;
+		switch(motor->response.dir)
+		{
+		case DIR_BRAKE:
+			*(motor->reg.pwma) = 0;
+			*(motor->reg.pwmb) = 0;
+			break;
+		case DIR_FORWARD:
+			*(motor->reg.pwma) = motor->response.pwm;
+			*(motor->reg.pwmb) = 0;
+			break;
+		case DIR_REVERSE:
+			*(motor->reg.pwma) = 0;
+			*(motor->reg.pwmb) = motor->response.pwm;
+			break;
+		}
 	}
 }

@@ -11,6 +11,7 @@
  */
 
 #include <stdio.h>
+#include <util/atomic.h>
 #include "motor.h"
 
 #define LIMIT(x, min, max)	((x) < (min)) ? (min) : (((x) > (max)) ? (max) : (x))
@@ -98,6 +99,9 @@ void init_controller(controller_t *controller,
  */
 void change_setpoint(motor_t *motor, int sp)
 {
-	motor->controller.setpoint = sp;
-	motor->sample_counter = 0;
+	ATOMIC_BLOCK(ATOMIC_FORCEON)
+	{
+		motor->controller.setpoint = sp;
+		motor->sample_counter = 0;
+	}
 }
