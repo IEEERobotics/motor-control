@@ -6,6 +6,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <stdbool.h>
 #include "motor.h"
 #include "timer.h"
 
@@ -88,29 +89,14 @@ void init_ms_timer(void)
  */
 ISR(TCC0_OVF_vect)
 {
-	if(motor_a.controller.enabled)
+	if(pid_enabled)
 	{
-		compute_motor_pid(&motor_a);
-		update_speed(&motor_a);
-	}
+		compute_next_pid_iteration();
 
-	if(motor_b.controller.enabled)
-	{
-		compute_motor_pid(&motor_b);
-		update_speed(&motor_b);
-
-	}
-
-	if(motor_c.controller.enabled)
-	{
-		compute_motor_pid(&motor_c);
-		update_speed(&motor_c);
-	}
-
-	if(motor_d.controller.enabled)
-	{
-		compute_motor_pid(&motor_d);
-		update_speed(&motor_d);
+		update_speed(&MOTOR_LEFT_FRONT);
+		update_speed(&MOTOR_LEFT_BACK);
+		update_speed(&MOTOR_RIGHT_FRONT);
+		update_speed(&MOTOR_RIGHT_BACK);
 	}
 }
 

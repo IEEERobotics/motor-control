@@ -12,13 +12,22 @@
 #ifndef PID_H_
 #define PID_H_
 
+#include <stdbool.h>
 #include "motor.h"
 
 #define PID_MOTOR_KP			20
-#define PID_MOTOR_KI			2
-#define PID_MOTOR_KD			5
+#define PID_MOTOR_KI			2		// Ki/0.005; Ki=0.01
+#define PID_MOTOR_KD			5		// Kd*0.005; Kd=1000
 #define PID_MOTOR_ISUM_MIN		-10000000
 #define PID_MOTOR_ISUM_MAX		10000000
+
+#define PID_HEADING_KP			1
+#define PID_HEADING_KI			0
+#define PID_HEADING_KD			0
+#define PID_HEADING_ISUM_MIN	-10000000
+#define PID_HEADING_ISUM_MAX	10000000
+#define PID_HEADING_TOLERANCE	10		// Robot will stop and turn in place to correct
+										// heading if error is greater than this
 
 /**
  * @struct controller
@@ -34,16 +43,18 @@ typedef struct controller {
 	long i_sum_max;		//   windup".
 	int prev_input;		//!< The last input, used for computing the derivative term
 	int setpoint;		//!< The value at which the controller will attempt to converge
-	char enabled;		//!< True if PID is enabled, otherwise false
 } controller_t;
 
-void compute_motor_pid(motor_t *motor);
+void compute_next_pid_iteration(void);
 void init_controller(controller_t *controller,
 					 int p_const,
 					 int i_const,
 					 int d_const,
 					 long i_sum_min,
 					 long i_sum_max);
-void change_setpoint(motor_t *motor, int sp);
+void change_setpoint(int relative_heading, int speed);
+void init_heading_controller(void);
+
+extern bool pid_enabled;
 
 #endif /* PID_H_ */

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdbool.h>
 #include "motor.h"
 #include "pid.h"
 #include "servo_parallax.h"
@@ -53,7 +54,7 @@ const char *help = "heading [angle]\n"
 				   "pwm [a|b|c|d] [0-10000]\n"
 				   "sensors\n"
 				   "servo [0-15] [0-1000]\n"
-				   "set [a|b|c|d] [sp]\n"
+				   "set [heading] [speed]\n"
 				   "status\n";
 const char *error = "Bad command.";
 const char *bad_motor = "Bad motor.";
@@ -160,7 +161,7 @@ static inline void exec_pwm(void)
 	{
 		pwm = atoi(tok);
 
-		motor->controller.enabled = 0;
+		pid_enabled = false;
 
 		if(pwm > 0)
 		{
@@ -212,36 +213,17 @@ static inline void exec_servo(void)
 
 static inline void exec_set(void)
 {
-	motor_t *motor = get_motor(NEXT_TOKEN());
-	char *tok = strtok(NULL, delimiters);
-	int sp;
+	char *heading_str = NEXT_STRING();
+	char *speed_str = NEXT_STRING();
 
-	if(motor != NULL && tok != NULL)
+	if(heading_str != NULL && speed_str != NULL)
 	{
-		sp = atoi(tok);
-
-		if(sp > 0)
-		{
-			change_setpoint(motor, sp);
-			change_direction(motor, DIR_FORWARD);
-		}
-		else if(sp < 0)
-		{
-			change_setpoint(motor, -sp);
-			change_direction(motor, DIR_REVERSE);
-		}
-		else
-		{
-			change_setpoint(motor, 0);
-			change_direction(motor, DIR_BRAKE);
-		}
-
-		motor->controller.enabled = 1;
+		change_setpoint(atoi(heading_str), atoi(speed_str));
 	}
-	else if(motor == NULL)
-		puts(bad_motor);
 	else
+	{
 		puts(error);
+	}
 }
 
 

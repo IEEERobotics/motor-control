@@ -165,7 +165,10 @@ void init_motors(void)
  */
 void change_direction(motor_t *motor, direction_t dir)
 {
-	motor->response.dir = dir;
+	ATOMIC_BLOCK(ATOMIC_FORCEON)
+	{
+		motor->response.dir = dir;
+	}
 }
 
 
@@ -214,4 +217,10 @@ void update_speed(motor_t *motor)
 			break;
 		}
 	}
+}
+
+
+void reset_sample_counter(motor_t *motor)
+{
+	motor->sample_counter = NUM_SAMPLES;
 }

@@ -32,6 +32,10 @@ typedef struct motor motor_t;
 #define ENC_TIMER3  	TCF1
 #define NUM_SAMPLES 	256		// Number of samples to save in memory after changing the setpoint
 
+#define MOTOR_LEFT_FRONT	motor_a
+#define MOTOR_LEFT_BACK		motor_c
+#define MOTOR_RIGHT_FRONT	motor_b
+#define MOTOR_RIGHT_BACK	motor_d
 
 /**
  * @enum direction
@@ -100,7 +104,6 @@ extern motor_t motor_a, motor_b, motor_c, motor_d;
 void init_motor(motor_t *motor, register16_t *pwma, register16_t *pwmb, register16_t *enc);
 void init_motor_reg(motor_reg_t *reg, register16_t *pwma, register16_t *pwmb, register16_t *enc);
 void init_motor_port(PORT_t *port);
-void change_setpoint(motor_t *motor, int sp);
 void change_direction(motor_t *motor, direction_t dir);
 void change_pwm(motor_t *motor, int pwm);
 void update_speed(motor_t *motor);
