@@ -21,10 +21,11 @@ typedef enum token {
 	TOKEN_HEADING	= 4,
 	TOKEN_HELP 		= 5,
 	TOKEN_PWM		= 6,
-	TOKEN_SENSORS	= 7,
-	TOKEN_SERVO		= 8,
-	TOKEN_SET 		= 9,
-	TOKEN_STATUS 	= 10,
+	TOKEN_S			= 7,
+	TOKEN_SENSORS	= 8,
+	TOKEN_SERVO		= 9,
+	TOKEN_SET 		= 10,
+	TOKEN_STATUS 	= 11,
 } token_t;
 
 void test_serial_out(void);

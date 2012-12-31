@@ -13,6 +13,7 @@
 #include "motor.h"
 #include "pid.h"
 #include "servo_parallax.h"
+#include "ultrasonic.h"
 #include "serial_interactive.h"
 
 #define NEXT_TOKEN()	(find_token(strtok(NULL, delimiters)))
@@ -40,6 +41,7 @@ const char *tokens[] = { "a",
 					   	 "heading",
 					   	 "help",
 					   	 "pwm",
+					   	 "s",
 					   	 "sensors",
 					   	 "servo",
 					   	 "set",
@@ -190,7 +192,27 @@ static inline void exec_pwm(void)
 
 static inline void exec_sensors(void)
 {
-	puts(not_implemented);
+	uint16_t heading;
+	int us_left;
+	int us_front;
+	int us_bottom;
+	int us_right;
+	int us_back;
+	const char *fmt_string = "heading: %d\n"
+							 "us_left: %d\n"
+							 "us_right: %d\n"
+							 "us_front: %d\n"
+							 "us_back: %d\n"
+							 "us_bottom: %d\n";
+
+	while(! compass_read(&heading));
+	us_left = get_ultrasonic_distance(ULTRASONIC_LEFT);
+	us_front = get_ultrasonic_distance(ULTRASONIC_FRONT);
+	us_bottom = get_ultrasonic_distance(ULTRASONIC_BOTTOM);
+	us_right = get_ultrasonic_distance(ULTRASONIC_RIGHT);
+	us_back = get_ultrasonic_distance(ULTRASONIC_BACK);
+
+	printf(fmt_string, heading, us_left, us_right, us_front, us_back, us_bottom);
 }
 
 
@@ -299,6 +321,7 @@ static inline void parse_command(void)
 	case TOKEN_PWM:
 		exec_pwm();
 		break;
+	case TOKEN_S:
 	case TOKEN_SENSORS:
 		exec_sensors();
 		break;
