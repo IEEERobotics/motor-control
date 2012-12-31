@@ -71,10 +71,9 @@ static inline void compute_motor_pid(motor_t *motor, int setpoint)
 	else if(setpoint < 0)
 	{
 		motor->response.dir = DIR_REVERSE;
-		setpoint = -setpoint;
 	}
 
-	error = setpoint - get_motor_speed(motor);
+	error = abs(setpoint - get_motor_speed(motor));
 	mv = compute_pid(&(motor->controller), error);
 
 	motor->response.pwm = LIMIT(mv, 0, PWM_PERIOD);
