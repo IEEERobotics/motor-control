@@ -7,10 +7,16 @@
 
 #include <avr/io.h>
 #include <util/atomic.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "ultrasonic.h"
+
+#define NEXT_SENSOR_INDEX()		((current_sensor+1) % ULTRASONIC_NUM_SENSORS)
 
 volatile ultrasonic_t usensors[ULTRASONIC_NUM_SENSORS];
 volatile unsigned char current_sensor = ULTRASONIC_LEFT;
+volatile bool measurement_in_progress = false;
+
 
 void init_ultrasonic()
 {
@@ -43,6 +49,7 @@ void init_ultrasonic()
 	/* Initialize ultrasonic timer */
 	ULTRASONIC_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;
 	ULTRASONIC_TIMER.CTRLB = TC0_CCAEN_bm | TC_WGMODE_NORMAL_gc;
+	ULTRASONIC_TIMER.INTCTRLA = TC_OVFINTLVL_MED_gc;
 
 	/* Enable medium priority interrupts */
 	PMIC.CTRL |= PMIC_MEDLVLEN_bm;
@@ -86,16 +93,15 @@ void init_ultrasonic_struct(volatile ultrasonic_t *u,
  * @param u Pointer to ultrasonic_t struct
  * @return Distance in millimeters
  */
-void ping_ultrasonic(volatile ultrasonic_t *u)
+static inline void ping_ultrasonic(volatile ultrasonic_t *u)
 {
 	/* Set up ultrasonic timer for pulse width capture */
 	ULTRASONIC_CHMUX = u->echo_chmux;							// Connect event channel 4 to echo pin
-	ULTRASONIC_TIMER.PER = 0xffff;
+	ULTRASONIC_TIMER.PER = ULTRASONIC_TIMEOUT;
 	ULTRASONIC_TIMER.CTRLD = TC_EVACT_PW_gc | ULTRASONIC_EVSEL;	// Connect event channel 4 to timer
-	ULTRASONIC_TIMER.INTCTRLA = TC_OVFINTLVL_OFF_gc;
 	ULTRASONIC_TIMER.INTCTRLB = TC_CCAINTLVL_MED_gc;
 
-	u->port->OUTCLR = u->trig_bm;								// Fallig edge triggers sensor measurement
+	u->port->OUTCLR = u->trig_bm;								// Falling edge triggers sensor measurement
 }
 
 
@@ -127,13 +133,13 @@ int get_ultrasonic_distance(ultrasonic_id_t index)
  */
 ISR(ULTRASONIC_TIMER_VECT)
 {
+	measurement_in_progress = false;
 	usensors[current_sensor].distance = ULTRASONIC_TIMER.CCA;	// Convert to proper units
-	current_sensor = (current_sensor+1) % ULTRASONIC_NUM_SENSORS;
+	current_sensor = NEXT_SENSOR_INDEX();
 
 	/* Set up ultrasonic timer to generate delay */
 	ULTRASONIC_TIMER.PER = ULTRASONIC_TIMER_OVF_PER;
 	ULTRASONIC_TIMER.CTRLD = TC_EVACT_OFF_gc | TC_EVSEL_OFF_gc;
-	ULTRASONIC_TIMER.INTCTRLA = TC_OVFINTLVL_MED_gc;
 	ULTRASONIC_TIMER.INTCTRLB = TC_CCAINTLVL_OFF_gc;
 }
 
@@ -143,5 +149,15 @@ ISR(ULTRASONIC_TIMER_VECT)
  */
 ISR(ULTRASONIC_TIMER_OVF_VECT)
 {
-	ping_ultrasonic(&usensors[current_sensor]);
+	if(measurement_in_progress)
+	{
+		measurement_in_progress = false;
+		usensors[current_sensor].distance = -1;		// measurement failed
+		current_sensor = NEXT_SENSOR_INDEX();
+	}
+	else
+	{
+		measurement_in_progress = true;
+		ping_ultrasonic(&usensors[current_sensor]);
+	}
 }
