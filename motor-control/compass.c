@@ -61,8 +61,8 @@ inline bool send_receive(uint8_t rx_bytes,
 	TWI_MasterWriteRead(&twi,
 						COMPASS_TWI_ADDRESS,
 						tx_data,
-						rx_bytes,
-						tx_bytes);
+						tx_bytes,
+						rx_bytes);
 
 	while(twi.status != TWIM_STATUS_READY);
 

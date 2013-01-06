@@ -15,7 +15,7 @@
 #define COMPASS_TWI_PORT				PORTC
 #define COMPASS_TWI_FREQ				100000
 #define COMPASS_TWI_VECT				TWIC_TWIM_vect
-#define COMPASS_TWI_ADDRESS				0x42
+#define COMPASS_TWI_ADDRESS				(0x42 >> 1)
 
 // Compass command bytes
 #define COMPASS_WRITE_EEPROM			'w'
