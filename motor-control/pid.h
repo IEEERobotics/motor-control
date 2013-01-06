@@ -54,6 +54,8 @@ void init_controller(controller_t *controller,
 					 long i_sum_max);
 void change_setpoint(int relative_heading, int speed);
 void init_heading_controller(void);
+void change_heading_constants(int p, int i, int d);
+void change_motor_constants(int p, int i, int d);
 
 extern bool pid_enabled;
 

@@ -41,7 +41,9 @@ const char *tokens[] = { "a",
 					   	 "c",
 					   	 "d",
 					   	 "heading",
+					   	 "heading_pid",
 					   	 "help",
+					   	 "motor_pid",
 					   	 "pwm",
 					   	 "s",
 					   	 "sensors",
@@ -54,7 +56,9 @@ const char *prompt = "> ";
 const char *banner = "\fNCSU IEEE 2012 Hardware Team Motor Controller\n"
 					 "Type \"help\" for a list of available commands.";
 const char *help = "heading [angle]\n"
+				   "heading_pid [Kp] [Ki] [Kd]\n"
 				   "help\n"
+				   "motor_pid [Kp] [Ki] [Kd]\n"
 				   "pwm [a|b|c|d] [0-10000]\n"
 				   "sensors\n"
 				   "servo [0-15] [0-1000]\n"
@@ -149,9 +153,43 @@ static inline void exec_heading(void)
 }
 
 
+static inline void exec_heading_pid(void)
+{
+	char *p = NEXT_STRING();
+	char *i = NEXT_STRING();
+	char *d = NEXT_STRING();
+
+	if(p != NULL && i != NULL && d != NULL)
+	{
+		change_heading_constants(atoi(p), atoi(i), atoi(d));
+	}
+	else
+	{
+		puts(error);
+	}
+}
+
+
 static inline void exec_help(void)
 {
 	puts(help);
+}
+
+
+static inline void exec_motor_pid(void)
+{
+	char *p = NEXT_STRING();
+	char *i = NEXT_STRING();
+	char *d = NEXT_STRING();
+
+	if(p != NULL && i != NULL && d != NULL)
+	{
+		change_motor_constants(atoi(p), atoi(i), atoi(d));
+	}
+	else
+	{
+		puts(error);
+	}
 }
 
 
@@ -292,13 +330,13 @@ static inline void exec_status(void)
  */
 static inline void parse_command(void)
 {
-	char input[16];
+	char input[32];
 	int i = 0;
 	char c;
 
 	while((c = getchar()) != '\r')
 	{
-		if(i < 15 && isprint(c))
+		if(i < 31 && isprint(c))
 		{
 			input[i++] = c;
 			putchar(c);
@@ -322,8 +360,14 @@ static inline void parse_command(void)
 	case TOKEN_HEADING:
 		exec_heading();
 		break;
+	case TOKEN_HEADING_PID:
+		exec_heading_pid();
+		break;
 	case TOKEN_HELP:
 		exec_help();
+		break;
+	case TOKEN_MOTOR_PID:
+		exec_motor_pid();
 		break;
 	case TOKEN_PWM:
 		exec_pwm();

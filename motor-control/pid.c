@@ -23,6 +23,7 @@ int heading_setpoint, speed_setpoint;
 controller_t heading_pid;
 bool pid_enabled = false;
 
+
 /**
  * More abstract implementation of a PID controller
  *
@@ -144,15 +145,18 @@ void init_controller(controller_t *controller,
 					 long i_sum_min,
 					 long i_sum_max)
 {
-	controller->p_const = p_const;
-	controller->i_const = i_const;
-	controller->d_const = d_const;
-	controller->i_sum_min = i_sum_min;
-	controller->i_sum_max = i_sum_max;
+	ATOMIC_BLOCK(ATOMIC_FORCEON)
+	{
+		controller->p_const = p_const;
+		controller->i_const = i_const;
+		controller->d_const = d_const;
+		controller->i_sum_min = i_sum_min;
+		controller->i_sum_max = i_sum_max;
 
-	controller->i_sum = 0;
-	controller->prev_input = 0;
-	controller->setpoint = 0;
+		controller->i_sum = 0;
+		controller->prev_input = 0;
+		controller->setpoint = 0;
+	}
 }
 
 
@@ -183,13 +187,50 @@ void change_setpoint(int relative_heading, int speed)
 
 void init_heading_controller(void)
 {
-	heading_pid.p_const = PID_HEADING_KP;
-	heading_pid.i_const = PID_HEADING_KI;
-	heading_pid.d_const = PID_HEADING_KD;
-	heading_pid.i_sum_min = PID_HEADING_ISUM_MIN;
-	heading_pid.i_sum_max = PID_HEADING_ISUM_MAX;
+	init_controller(&heading_pid,
+					PID_HEADING_KP,
+					PID_HEADING_KI,
+					PID_HEADING_KD,
+					PID_HEADING_ISUM_MIN,
+					PID_HEADING_ISUM_MAX);
+}
 
-	heading_pid.i_sum = 0;
-	heading_pid.prev_input = 0;
-	heading_pid.setpoint = 0;
+
+void change_heading_constants(int p, int i, int d)
+{
+	init_controller(&heading_pid,
+					p,
+					i,
+					d,
+					PID_HEADING_ISUM_MIN,
+					PID_HEADING_ISUM_MAX);
+}
+
+
+void change_motor_constants(int p, int i, int d)
+{
+	init_controller(&(motor_a.controller),
+					p,
+					i,
+					d,
+					PID_MOTOR_ISUM_MIN,
+					PID_MOTOR_ISUM_MAX);
+	init_controller(&(motor_b.controller),
+					p,
+					i,
+					d,
+					PID_MOTOR_ISUM_MIN,
+					PID_MOTOR_ISUM_MAX);
+	init_controller(&(motor_c.controller),
+					p,
+					i,
+					d,
+					PID_MOTOR_ISUM_MIN,
+					PID_MOTOR_ISUM_MAX);
+	init_controller(&(motor_d.controller),
+					p,
+					i,
+					d,
+					PID_MOTOR_ISUM_MIN,
+					PID_MOTOR_ISUM_MAX);
 }
