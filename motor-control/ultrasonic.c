@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include "ultrasonic.h"
 
+#define CURRENT_SENSOR			(usensors[current_sensor])
 #define NEXT_SENSOR_INDEX()		((current_sensor+1) % ULTRASONIC_NUM_SENSORS)
 
 volatile ultrasonic_t usensors[ULTRASONIC_NUM_SENSORS];
@@ -18,6 +19,63 @@ volatile unsigned char current_sensor = ULTRASONIC_LEFT;
 volatile bool measurement_in_progress = false;
 
 
+/**
+ * Initializes an ultrasonic_t struct
+ *
+ * @param u Struct to initialize
+ * @param port Port that trig and echo pins are connected to
+ * @param trig_bm "Trig" pin bitmask
+ * @param echo_bm "Echo" pin bitmask
+ * @param echo_chmux EVSYS_CHMUX_t corresponding to the echo pin
+ */
+static inline void init_ultrasonic_struct(volatile ultrasonic_t *u,
+					 	 				  PORT_t *port,
+					 	 				  uint8_t trig_bm,
+					 	 				  uint8_t echo_bm,
+					 	 				  EVSYS_CHMUX_t echo_chmux)
+{
+	port->OUTSET = trig_bm;		// Set trigger high (falling edge triggered)
+	port->DIRSET = trig_bm;		// Set trigger as output
+	port->DIRCLR = echo_bm;		// Set echo as input
+
+	u->port = port;
+	u->trig_bm = trig_bm;
+	u->echo_bm = echo_bm;
+	u->echo_chmux = echo_chmux;
+	u->distance = -1;
+}
+
+
+/**
+ * Trigger an ultrasonic sensor measurement
+ */
+static inline void ping_ultrasonic(void)
+{
+	volatile ultrasonic_t *u = &CURRENT_SENSOR;
+
+	measurement_in_progress = true;
+	ULTRASONIC_CHMUX = u->echo_chmux;			// Connect event channel 4 to echo pin
+	u->port->OUTCLR = u->trig_bm;				// Falling edge triggers sensor measurement
+}
+
+
+/**
+ * Set the result of a sensor measurement, and reset for the next run
+ */
+static inline void set_result(int result)
+{
+	volatile ultrasonic_t *u = &CURRENT_SENSOR;
+
+	u->distance = result;
+	u->port->OUTSET = usensors[current_sensor].trig_bm;
+	current_sensor = NEXT_SENSOR_INDEX();
+	measurement_in_progress = false;
+}
+
+
+/**
+ * Top-level function to initialize the ultrasonic sensors
+ */
 void init_ultrasonic()
 {
 	init_ultrasonic_struct(&usensors[ULTRASONIC_LEFT],
@@ -47,61 +105,19 @@ void init_ultrasonic()
 						   ULTRASONIC_BACK_CHMUX);
 
 	/* Initialize ultrasonic timer */
-	ULTRASONIC_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;
 	ULTRASONIC_TIMER.CTRLB = TC0_CCAEN_bm | TC_WGMODE_NORMAL_gc;
+	ULTRASONIC_TIMER.CTRLD = TC_EVACT_PW_gc | ULTRASONIC_EVSEL;	// Connect event channel 4 to timer
 	ULTRASONIC_TIMER.INTCTRLA = TC_OVFINTLVL_MED_gc;
+	ULTRASONIC_TIMER.INTCTRLB = TC_CCAINTLVL_MED_gc;
+	ULTRASONIC_TIMER.PER = ULTRASONIC_TIMEOUT;
+	ULTRASONIC_TIMER.CTRLA = TC_CLKSEL_DIV64_gc;
 
 	/* Enable medium priority interrupts */
 	PMIC.CTRL |= PMIC_MEDLVLEN_bm;
 	sei();
 
 	/* Trigger first sensor measurement */
-	ping_ultrasonic(&usensors[current_sensor]);
-}
-
-
-/**
- * Initializes an ultrasonic_t struct
- *
- * @param u Struct to initialize
- * @param port Port that trig and echo pins are connected to
- * @param trig_bm "Trig" pin bitmask
- * @param echo_bm "Echo" pin bitmask
- * @param echo_chmux EVSYS_CHMUX_t corresponding to the echo pin
- */
-void init_ultrasonic_struct(volatile ultrasonic_t *u,
-					 	 	PORT_t *port,
-					 	 	uint8_t trig_bm,
-					 	 	uint8_t echo_bm,
-					 	 	EVSYS_CHMUX_t echo_chmux)
-{
-	port->OUTSET = trig_bm;		// Set trigger high (falling edge triggered)
-	port->DIRSET = trig_bm;		// Set trigger as output
-	port->DIRCLR = echo_bm;		// Set echo as input
-
-	u->port = port;
-	u->trig_bm = trig_bm;
-	u->echo_bm = echo_bm;
-	u->echo_chmux = echo_chmux;
-	u->distance = -1;
-}
-
-
-/**
- * Trigger an ultrasonic sensor measurement
- *
- * @param u Pointer to ultrasonic_t struct
- * @return Distance in millimeters
- */
-static inline void ping_ultrasonic(volatile ultrasonic_t *u)
-{
-	/* Set up ultrasonic timer for pulse width capture */
-	ULTRASONIC_CHMUX = u->echo_chmux;							// Connect event channel 4 to echo pin
-	ULTRASONIC_TIMER.PER = ULTRASONIC_TIMEOUT;
-	ULTRASONIC_TIMER.CTRLD = TC_EVACT_PW_gc | ULTRASONIC_EVSEL;	// Connect event channel 4 to timer
-	ULTRASONIC_TIMER.INTCTRLB = TC_CCAINTLVL_MED_gc;
-
-	u->port->OUTCLR = u->trig_bm;								// Falling edge triggers sensor measurement
+	ping_ultrasonic();
 }
 
 
@@ -133,14 +149,7 @@ int get_ultrasonic_distance(ultrasonic_id_t index)
  */
 ISR(ULTRASONIC_TIMER_VECT)
 {
-	measurement_in_progress = false;
-	usensors[current_sensor].distance = ULTRASONIC_TIMER.CCA;	// Convert to proper units
-	current_sensor = NEXT_SENSOR_INDEX();
-
-	/* Set up ultrasonic timer to generate delay */
-	ULTRASONIC_TIMER.PER = ULTRASONIC_TIMER_OVF_PER;
-	ULTRASONIC_TIMER.CTRLD = TC_EVACT_OFF_gc | TC_EVSEL_OFF_gc;
-	ULTRASONIC_TIMER.INTCTRLB = TC_CCAINTLVL_OFF_gc;
+	set_result(ULTRASONIC_TIMER.CCA);
 }
 
 
@@ -150,14 +159,7 @@ ISR(ULTRASONIC_TIMER_VECT)
 ISR(ULTRASONIC_TIMER_OVF_VECT)
 {
 	if(measurement_in_progress)
-	{
-		measurement_in_progress = false;
-		usensors[current_sensor].distance = -1;		// measurement failed
-		current_sensor = NEXT_SENSOR_INDEX();
-	}
-	else
-	{
-		measurement_in_progress = true;
-		ping_ultrasonic(&usensors[current_sensor]);
-	}
+		set_result(-1);
+
+	ping_ultrasonic();
 }

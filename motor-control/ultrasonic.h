@@ -69,12 +69,6 @@ typedef enum ultrasonic_id {
 } ultrasonic_id_t;
 
 void init_ultrasonic();
-void init_ultrasonic_struct(volatile ultrasonic_t *u,
-					 	 	PORT_t *port,
-					 	 	uint8_t trig_bm,
-					 	 	uint8_t echo_bm,
-					 	 	EVSYS_CHMUX_t echo_chmux);
-void ping_ultrasonic(volatile ultrasonic_t *u);
 int get_ultrasonic_distance(ultrasonic_id_t index);
 
 
