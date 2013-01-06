@@ -10,6 +10,7 @@
 #include "motor.h"
 #include "timer.h"
 
+volatile uint8_t ms_timer = 0;
 
 /**
  * Initializes a PWM timer
@@ -89,6 +90,8 @@ void init_ms_timer(void)
  */
 ISR(TCC0_OVF_vect)
 {
+	ms_timer++;
+
 	if(pid_enabled)
 	{
 		compute_next_pid_iteration();
