@@ -27,7 +27,8 @@ typedef enum token {
 	TOKEN_SENSORS		= 10,
 	TOKEN_SERVO			= 11,
 	TOKEN_SET 			= 12,
-	TOKEN_STATUS 		= 13,
+	TOKEN_SIZEOFS		= 13,
+	TOKEN_STATUS 		= 14,
 } token_t;
 
 void test_serial_out(void);

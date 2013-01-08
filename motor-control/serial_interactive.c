@@ -49,6 +49,7 @@ const char *tokens[] = { "a",
 					   	 "sensors",
 					   	 "servo",
 					   	 "set",
+					   	 "sizeofs",
 					   	 "status"
 };
 
@@ -63,6 +64,7 @@ const char *help = "heading [angle]\n"
 				   "sensors\n"
 				   "servo [0-15] [0-1000]\n"
 				   "set [heading] [speed]\n"
+				   "sizeofs\n"
 				   "status\n";
 const char *error = "Bad command.";
 const char *bad_motor = "Bad motor.";
@@ -294,6 +296,17 @@ static inline void exec_set(void)
 }
 
 
+static inline void exec_sizeofs(void)
+{
+	const char *fmt_string = "char: %d\n"
+							 "short int: %d\n"
+							 "int: %d\n"
+							 "long int: %d\n";
+
+	printf(fmt_string, sizeof(char), sizeof(short int), sizeof(int), sizeof(long int));
+}
+
+
 static inline void exec_status(void)
 {
 	int i;
@@ -381,6 +394,9 @@ static inline void parse_command(void)
 		break;
 	case TOKEN_SET:
 		exec_set();
+		break;
+	case TOKEN_SIZEOFS:
+		exec_sizeofs();
 		break;
 	case TOKEN_STATUS:
 		exec_status();
