@@ -24,6 +24,13 @@ controller_t heading_pid;
 bool pid_enabled = false;
 
 
+static inline void reset_controller(controller_t *c)
+{
+	c->i_sum = 0;
+	c->prev_input = 0;
+}
+
+
 /**
  * More abstract implementation of a PID controller
  *
@@ -178,6 +185,12 @@ void change_setpoint(int relative_heading, int speed)
 
 	ATOMIC_BLOCK(ATOMIC_FORCEON)
 	{
+		reset_controller(&heading_pid);
+		reset_controller(&(motor_a.controller));
+		reset_controller(&(motor_b.controller));
+		reset_controller(&(motor_c.controller));
+		reset_controller(&(motor_d.controller));
+
 		heading_setpoint = new_heading_setpoint;
 		speed_setpoint = speed;
 		pid_enabled = true;
@@ -198,6 +211,8 @@ void init_heading_controller(void)
 
 void change_heading_constants(int p, int i, int d)
 {
+	pid_enabled = false;
+
 	init_controller(&heading_pid,
 					p,
 					i,
@@ -209,6 +224,8 @@ void change_heading_constants(int p, int i, int d)
 
 void change_motor_constants(int p, int i, int d)
 {
+	pid_enabled = false;
+
 	init_controller(&(motor_a.controller),
 					p,
 					i,
