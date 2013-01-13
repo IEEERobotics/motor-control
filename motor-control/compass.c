@@ -10,10 +10,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "clock.h"
-#include "twi_master_driver.h"
+#include "i2c.h"
 #include "compass.h"
-
-TWI_Master_t twi;
 
 
 /**
@@ -21,19 +19,6 @@ TWI_Master_t twi;
  */
 void init_compass(void)
 {
-	// Enable pullup resistors for I2C bus
-	COMPASS_TWI_PORT.PIN0CTRL |= PORT_OPC_PULLUP_gc;
-	COMPASS_TWI_PORT.PIN1CTRL |= PORT_OPC_PULLUP_gc;
-
-	TWI_MasterInit(&twi,
-				   &COMPASS_TWI,
-				   TWI_MASTER_INTLVL_MED_gc,
-				   TWI_BAUD(CPU_SPEED_HZ, COMPASS_TWI_FREQ));
-
-	// Enable medium priority interrupts
-	PMIC.CTRL |= PMIC_MEDLVLEN_bm;
-	sei();
-
 	/* Initialize compass state. Consider adding a timeout so we don't get stuck here. */
 	while(! compass_wakeup());
 	// Continuous mode, 20Hz update frequency
@@ -51,25 +36,16 @@ void init_compass(void)
  * @param tx_data Pointer to data to send
  * @return True if transaction was successful, otherwise false
  */
-inline bool send_receive(uint8_t rx_bytes,
-						 uint8_t tx_bytes,
-						 uint8_t *rx_data,
-						 uint8_t *tx_data)
+static inline bool send_receive(uint8_t rx_bytes,
+						 	 	uint8_t tx_bytes,
+						 	 	uint8_t *rx_data,
+						 	 	uint8_t *tx_data)
 {
-	int i;
-
-	TWI_MasterWriteRead(&twi,
-						COMPASS_TWI_ADDRESS,
-						tx_data,
-						tx_bytes,
-						rx_bytes);
-
-	while(twi.status != TWIM_STATUS_READY);
-
-	for(i=0; i<rx_bytes; i++)
-		rx_data[i] = twi.readData[i];
-
-	return (twi.result == TWIM_RESULT_OK);
+	return i2c_send_receive(COMPASS_TWI_ADDRESS,
+							rx_bytes,
+							tx_bytes,
+							rx_data,
+							tx_data);
 }
 
 
@@ -219,8 +195,3 @@ bool compass_read(uint16_t *data)
 	return result;
 }
 
-
-ISR(COMPASS_TWI_VECT)
-{
-	TWI_MasterInterruptHandler(&twi);
-}

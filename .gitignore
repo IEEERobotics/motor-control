@@ -19,11 +19,3 @@ motor-control/Release/makefile
 *.eep
 
 *.hex
-
-motor-control/i2c.c
-
-motor-control/i2c.h
-
-motor-control/i2c_old.c
-
-motor-control/i2c_old.h
