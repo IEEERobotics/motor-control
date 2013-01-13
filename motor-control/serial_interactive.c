@@ -310,31 +310,25 @@ static inline void exec_sizeofs(void)
 static inline void exec_status(void)
 {
 	int i;
-	motor_t *motor = get_motor(NEXT_TOKEN());
 
-	if(motor != NULL)
+	puts("a_error a_out b_error b_out c_error c_out d_error d_out heading_error heading_out\n[");
+
+	for(i=0; i<PID_NUM_SAMPLES; i++)
 	{
-		if(motor->sample_counter < NUM_SAMPLES)
-		{
-			printf("The sample buffer is not yet full. Only %d out of %d samples have been "
-				   "collected so far.\n", motor->sample_counter+1, NUM_SAMPLES);
-			return;
-		}
-
-		puts("pwm speed");
-		printf("[");
-
-		for(i=0; i<NUM_SAMPLES; i++)
-		{
-			printf("%u %u\n", motor->samples[i].pwm, motor->samples[i].enc);
-		}
-
-		printf("]\n");
+		printf("%d %d %d %d %d %d %d %d %d %d\n",
+				motor_a.controller.samples[i].error,
+				motor_a.controller.samples[i].output,
+				motor_b.controller.samples[i].error,
+				motor_b.controller.samples[i].output,
+				motor_c.controller.samples[i].error,
+				motor_c.controller.samples[i].output,
+				motor_d.controller.samples[i].error,
+				motor_d.controller.samples[i].output,
+				heading_pid.samples[i].error,
+				heading_pid.samples[i].output);
 	}
-	else
-	{
-		puts(bad_motor);
-	}
+
+	puts("]\n");
 }
 
 

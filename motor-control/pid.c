@@ -28,6 +28,7 @@ static inline void reset_controller(controller_t *c)
 {
 	c->i_sum = 0;
 	c->prev_input = 0;
+	c->sample_counter = 0;
 }
 
 
@@ -40,7 +41,8 @@ static inline void reset_controller(controller_t *c)
  */
 static inline int compute_pid(controller_t *pid, int error)
 {
-	int p, i, d;
+	int p, i, d, output;
+	volatile sample_t *sample;
 
 	pid->i_sum += error;
 	pid->i_sum = LIMIT(pid->i_sum, pid->i_sum_min, pid->i_sum_max);
@@ -50,8 +52,16 @@ static inline int compute_pid(controller_t *pid, int error)
 	d = pid->d_const * (error - pid->prev_input);
 
 	pid->prev_input = error;
+	output = p + i + d;
 
-	return p + i + d;
+	if(pid->sample_counter < PID_NUM_SAMPLES)
+	{
+		sample = &(pid->samples[pid->sample_counter++]);
+		sample->error = error;
+		sample->output = output;
+	}
+
+	return output;
 }
 
 
@@ -152,18 +162,16 @@ void init_controller(controller_t *controller,
 					 long i_sum_min,
 					 long i_sum_max)
 {
-	ATOMIC_BLOCK(ATOMIC_FORCEON)
-	{
-		controller->p_const = p_const;
-		controller->i_const = i_const;
-		controller->d_const = d_const;
-		controller->i_sum_min = i_sum_min;
-		controller->i_sum_max = i_sum_max;
+	controller->p_const = p_const;
+	controller->i_const = i_const;
+	controller->d_const = d_const;
+	controller->i_sum_min = i_sum_min;
+	controller->i_sum_max = i_sum_max;
 
-		controller->i_sum = 0;
-		controller->prev_input = 0;
-		controller->setpoint = 0;
-	}
+	controller->i_sum = 0;
+	controller->prev_input = 0;
+	controller->setpoint = 0;
+	controller->sample_counter = 0;
 }
 
 
@@ -175,6 +183,8 @@ void init_controller(controller_t *controller,
  */
 void change_setpoint(int relative_heading, int speed)
 {
+	pid_enabled = false;
+
 	uint16_t current_heading;
 	int new_heading_setpoint;
 
@@ -183,18 +193,16 @@ void change_setpoint(int relative_heading, int speed)
 	/* Calculate absolute heading, add or subtract 360 degrees if necessary */
 	new_heading_setpoint = normalize_heading(relative_heading + current_heading);
 
-	ATOMIC_BLOCK(ATOMIC_FORCEON)
-	{
-		reset_controller(&heading_pid);
-		reset_controller(&(motor_a.controller));
-		reset_controller(&(motor_b.controller));
-		reset_controller(&(motor_c.controller));
-		reset_controller(&(motor_d.controller));
+	reset_controller(&heading_pid);
+	reset_controller(&(motor_a.controller));
+	reset_controller(&(motor_b.controller));
+	reset_controller(&(motor_c.controller));
+	reset_controller(&(motor_d.controller));
 
-		heading_setpoint = new_heading_setpoint;
-		speed_setpoint = speed;
-		pid_enabled = true;
-	}
+	heading_setpoint = new_heading_setpoint;
+	speed_setpoint = speed;
+
+	pid_enabled = true;
 }
 
 

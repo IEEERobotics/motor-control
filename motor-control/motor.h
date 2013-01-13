@@ -30,7 +30,6 @@ typedef struct motor motor_t;
 #define ENC_TIMER1  	TCD1
 #define ENC_TIMER2  	TCE1
 #define ENC_TIMER3  	TCF1
-#define NUM_SAMPLES 	256		// Number of samples to save in memory after changing the setpoint
 
 #define MOTOR_LEFT_FRONT	motor_a
 #define MOTOR_LEFT_BACK		motor_c
@@ -79,12 +78,6 @@ typedef struct motor_response {
 } motor_response_t;
 
 
-typedef struct sample {
-	volatile short unsigned int pwm;
-	volatile short unsigned int enc;
-} sample_t;
-
-
 /**
  * @struct motor
  *
@@ -94,9 +87,7 @@ struct motor {
 	motor_reg_t reg;
 	motor_response_t response;
 	controller_t controller;
-	sample_t samples[NUM_SAMPLES];
-	volatile short int sample_counter;
-	volatile int encoder_count;
+	volatile long int encoder_count;
 };
 
 extern motor_t motor_a, motor_b, motor_c, motor_d;

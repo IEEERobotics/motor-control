@@ -113,7 +113,6 @@ void init_motor(motor_t *motor,
 					PID_MOTOR_KD,
 					PID_MOTOR_ISUM_MIN,
 					PID_MOTOR_ISUM_MAX);
-	motor->sample_counter = 0;
 	motor->encoder_count = 0;
 }
 
@@ -217,10 +216,4 @@ void update_speed(motor_t *motor)
 			break;
 		}
 	}
-}
-
-
-void reset_sample_counter(motor_t *motor)
-{
-	motor->sample_counter = NUM_SAMPLES;
 }

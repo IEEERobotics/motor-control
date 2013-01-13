@@ -28,6 +28,14 @@
 #define PID_HEADING_ISUM_MAX	10000000
 #define PID_HEADING_TOLERANCE	10		// Robot will stop and turn in place to correct
 										// heading if error is greater than this
+#define PID_NUM_SAMPLES 		128		// Number of samples to save in memory after changing the setpoint
+
+
+typedef struct sample {
+	volatile short unsigned int error;
+	volatile short unsigned int output;
+} sample_t;
+
 
 /**
  * @struct controller
@@ -43,6 +51,8 @@ typedef struct controller {
 	long i_sum_max;		//   windup".
 	int prev_input;		//!< The last input, used for computing the derivative term
 	int setpoint;		//!< The value at which the controller will attempt to converge
+	volatile sample_t samples[PID_NUM_SAMPLES];
+	volatile unsigned short int sample_counter;
 } controller_t;
 
 void compute_next_pid_iteration(void);
@@ -58,5 +68,6 @@ void change_heading_constants(int p, int i, int d);
 void change_motor_constants(int p, int i, int d);
 
 extern bool pid_enabled;
+extern controller_t heading_pid;
 
 #endif /* PID_H_ */
