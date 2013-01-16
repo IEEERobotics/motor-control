@@ -1,0 +1,156 @@
+/**
+ * @file
+ * @author Ethan LaMaster <ealamast@ncsu.edu>
+ * @version 0.1
+ *
+ * @section Description
+ *
+ * Functions to initialize the UART, and to parse commands sent over serial.
+ */
+
+#include <stdio.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include "buffer.h"
+#include "uart.h"
+
+//#define UART USARTC0
+#define UART_DREINTLVL	USART_DREINTLVL_MED_gc	// Data Register Empty interrupt priority
+#define USE_DOS_NEWLINES						// Use CRLF line endings
+//#define UART_ECHO_ON					// Echo received characters back to the terminal
+
+uart_t debug_uart;
+
+
+/**
+ * Initializes the UART. stdio.h won't work until this function is called.
+ */
+void init_uart()
+{
+	debug_uart.usart = &USARTC0;
+
+	// Initialize buffers
+	buffer_init(&(debug_uart.read_buffer), debug_uart.read_buffer_data, UART_BUFFER_SIZE);
+	buffer_init(&(debug_uart.write_buffer), debug_uart.write_buffer_data, UART_BUFFER_SIZE);
+
+	// Set up port pins
+	PORTC.DIRSET = PIN3_bm;
+	PORTC.DIRCLR = PIN2_bm;
+
+	// Set interrupt priority levels
+	debug_uart.usart->CTRLA = USART_RXCINTLVL_MED_gc
+			   | USART_DREINTLVL_OFF_gc;
+
+	// Enable transmit and receive on the UART
+	debug_uart.usart->CTRLB = USART_RXEN_bm
+			   | USART_TXEN_bm;
+
+	// Asynchronous mode, 8 bits, no parity
+	debug_uart.usart->CTRLC = USART_CMODE_ASYNCHRONOUS_gc
+			   | USART_PMODE_DISABLED_gc
+			   | USART_CHSIZE_8BIT_gc;
+
+	// BSEL=2094, BSCALE=-7
+	// Baudrate is 115200 at 32 MHz system clock
+	debug_uart.usart->BAUDCTRLA = 0x2e;
+	debug_uart.usart->BAUDCTRLB = 0x98;
+
+	// Attach the uart_getchar and uart_putchar functions to the UART_IN and UART_OUT
+	// file streams
+	fdev_setup_stream(&(debug_uart.f_in), NULL, uart_getchar, _FDEV_SETUP_READ);
+	fdev_setup_stream(&(debug_uart.f_out), uart_putchar, NULL, _FDEV_SETUP_WRITE);
+
+	// Connect stdin, stdout, and stderr to the UART
+	stdin = &(debug_uart.f_in);
+	stdout = &(debug_uart.f_out);
+	stderr = &(debug_uart.f_out);
+
+	// Enable medium-priority interrupts
+	PMIC.CTRL |= PMIC_MEDLVLEN_bm;
+	sei();
+}
+
+
+/**
+ * Write a character to the UART. This function is connected to the uart_out FILE stream,
+ * which is set to stdout and stderr.
+ *
+ * @param c Character to transmit
+ * @param f FILE pointer to operate on. This parameter is ignored, but is required by
+ * 			stdio.
+ *
+ * @return Character that was transmitted, casted to an int.
+ */
+int uart_putchar(char c, FILE *f)
+{
+	PORTA.OUTSET = PIN0_bm;
+#ifdef USE_DOS_NEWLINES
+	if(c == '\n')
+		uart_putchar('\r', stdout);
+#endif
+
+	buffer_put(&(debug_uart.write_buffer), c);
+
+	// Enable Data Register Empty interrupt. This will be disabled once all of the data
+	// in write_buffer has been sent.
+	debug_uart.usart->CTRLA = (debug_uart.usart->CTRLA & ~USART_DREINTLVL_gm) | UART_DREINTLVL;
+
+	PORTA.OUTCLR = PIN0_bm;
+	return c;
+}
+
+
+/**
+ * Read a character from the UART. This function is connected to the uart_in FILE stream,
+ * which is set to stdin.
+ *
+ * @param f FILE pointer to operate on. This parameter is ignored, but is required by
+ * 			stdio.
+ *
+ * @return Received character, casted to an int.
+ */
+int uart_getchar(FILE *f)
+{
+	PORTA.OUTSET = PIN2_bm;
+	uint8_t c;
+
+	while(! buffer_get(&(debug_uart.read_buffer), &c));	// Block while read_buffer is empty
+#ifdef UART_ECHO_ON
+	uart_putchar(c);
+#endif
+	PORTA.OUTCLR = PIN2_bm;
+	return (int) c;
+}
+
+
+/**
+ * Data Register Empty ISR
+ *
+ * This ISR is called whenever the UART is ready to transmit the next byte, and it has
+ * been enabled in uart_putchar(). This interrupt is disabled as soon as write_buffer
+ * becomes empty (or else it would be called continuously).
+ */
+ISR(USARTC0_DRE_vect)
+{
+	PORTA.OUTSET = PIN4_bm;
+	uint8_t c;
+
+	if(buffer_get(&(debug_uart.write_buffer), &c))
+		debug_uart.usart->DATA = c;
+	else
+		debug_uart.usart->CTRLA = (debug_uart.usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc;
+	PORTA.OUTCLR = PIN4_bm;
+}
+
+
+/**
+ * Receive Complete ISR
+ *
+ * This ISR is called whenever the UART has received a byte.
+ */
+ISR(USARTC0_RXC_vect)
+{
+	PORTA.OUTSET = PIN6_bm;
+	buffer_put(&(debug_uart.read_buffer), debug_uart.usart->DATA);
+	PORTA.OUTCLR = PIN6_bm;
+}

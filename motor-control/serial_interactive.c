@@ -271,7 +271,7 @@ static inline void exec_servo(void)
 
 	if(channel != NULL && ramp != NULL && angle != NULL)
 	{
-		parallax_set_angle(atoi(channel), atoi(angle), atoi(ramp));
+//		parallax_set_angle(atoi(channel), atoi(angle), atoi(ramp));
 	}
 	else
 	{

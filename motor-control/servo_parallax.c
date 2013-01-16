@@ -5,6 +5,7 @@
  *      Author: eal
  */
 
+#ifdef DISABLED
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -138,3 +139,5 @@ ISR(UART_DRE_VECT)
 	else
 		UART.CTRLA = (UART.CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc;
 }
+
+#endif

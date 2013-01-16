@@ -56,6 +56,7 @@
 #include "clock.h"
 #include "uart.h"
 #include "serial_interactive.h"
+#include "serial_pandaboard.h"
 #include "timer.h"
 #include "compass.h"
 #include "ultrasonic.h"
@@ -67,17 +68,23 @@
  */
 int main()
 {
+	PORTE.DIRSET = 0xff;
+	PORTA.DIRSET = 0xff;
+	PORTE.OUT = 0xff;
+	PORTA.OUT = 0x00;
+
 	init_clock();		// Set up the system clock
 	init_motors();		// Set up everything to do with motor control
 	init_ms_timer();	// Initialize timer interrupt
-	init_ultrasonic();
+//	init_ultrasonic();
 	init_uart();		// Set up the UART
-	init_compass();
+//	init_compass();
 	print_banner();		// Print welcome message to the serial port
 
 	for(;;)
 	{
 		get_command_interactive();	// Get the next serial command and run it
+//		get_command_pandaboard();
 
 		//__asm__ __volatile("nop");
 	}

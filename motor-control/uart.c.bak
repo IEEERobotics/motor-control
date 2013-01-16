@@ -1,0 +1,196 @@
+/**
+ * @file
+ * @author Ethan LaMaster <ealamast@ncsu.edu>
+ * @version 0.1
+ *
+ * @section Description
+ *
+ * Functions to initialize the UART, and to parse commands sent over serial.
+ */
+
+#include <stdio.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include "buffer.h"
+#include "uart.h"
+
+//#define UART_ECHO_ON								// Echo received characters back to the terminal
+
+uart_t pb_uart, db_uart;							// Pandaboard and debug UARTS
+
+
+void init_uart(uart_t *u, USART_t *usart, uint16_t bsel, int8_t bscale)
+{
+	/* Initialize buffers */
+	buffer_init(&(u->read_buffer), u->read_buffer_data, UART_BUFFER_SIZE);
+	buffer_init(&(u->write_buffer), u->write_buffer_data, UART_BUFFER_SIZE);
+
+	/* Configure UART device */
+	// Set interrupt priority levels
+	usart->CTRLA = USART_RXCINTLVL_MED_gc
+				| USART_DREINTLVL_OFF_gc;
+
+	// Enable transmit and receive on the UART
+	usart->CTRLB = USART_RXEN_bm
+			    | USART_TXEN_bm;
+
+	// Asynchronous mode, 8 bits, no parity
+	usart->CTRLC = USART_CMODE_ASYNCHRONOUS_gc
+				| USART_PMODE_DISABLED_gc
+				| USART_CHSIZE_8BIT_gc;
+
+//	usart->BAUDCTRLA = bsel & 0xff;
+//	usart->BAUDCTRLB = ((bsel >> 8) & 0x0f) | ((bscale << 4) & 0xf0);
+	usart->BAUDCTRLA = 0x2e;
+	usart->BAUDCTRLB = 0x98;
+
+	/* Setup file streams */
+	fdev_setup_stream(&(u->f_in), NULL, uart_getchar, _FDEV_SETUP_READ);
+	fdev_setup_stream(&(u->f_out), uart_putchar, NULL, _FDEV_SETUP_WRITE);
+	fdev_set_udata(&(u->f_in), u);
+	fdev_set_udata(&(u->f_out), u);
+
+	// Enable medium-priority interrupts
+	PMIC.CTRL |= PMIC_MEDLVLEN_bm;
+	sei();
+}
+
+
+/**
+ * Initializes the UART. stdio.h won't work until this function is called.
+ */
+void init_uarts()
+{
+	// Set up port pins
+	PORTC.DIRSET = PIN3_bm;
+	PORTC.DIRCLR = PIN2_bm;
+//	PORTE.DIRSET = PIN3_bm;
+//	PORTE.DIRCLR = PIN2_bm;
+
+//	init_uart(&pb_uart, &PANDABOARD_USART, 2094, -7);
+	init_uart(&db_uart, &DEBUG_USART, 2094, -7);
+
+	// Connect stdin, stdout, and stderr to the UART
+	stdin = &(db_uart.f_in);
+	stdout = &(db_uart.f_out);
+	stderr = &(db_uart.f_out);
+}
+
+
+/**
+ * Write a character to the UART.
+ *
+ * @param c Character to transmit
+ * @param f FILE pointer to operate on. This parameter is ignored, but is required by
+ * 			stdio.
+ *
+ * @return Character that was transmitted, casted to an int.
+ */
+int uart_putchar(char c, FILE *f)
+{
+	PORTA.OUTSET = PIN0_bm;
+
+	uart_t *u = fdev_get_udata(f);
+	USART_t *usart = u->usart;
+
+#ifdef USE_DOS_NEWLINES
+	if(c == '\n')
+		uart_putchar('\r', f);
+#endif
+
+	buffer_put(&(u->write_buffer), c);
+
+	// Enable Data Register Empty interrupt. This will be disabled once all of the data
+	// in write_buffer has been sent.
+//	usart->CTRLA = (usart->CTRLA & ~USART_DREINTLVL_gm) | UART_DREINTLVL;
+	USARTC0.CTRLA = (USARTC0.CTRLA & ~USART_DREINTLVL_gm) | UART_DREINTLVL;
+
+	PORTA.OUTCLR = PIN0_bm;
+
+	return c;
+}
+
+
+/**
+ * Read a character from the UART.
+ *
+ * @param f FILE pointer to operate on. This parameter is ignored, but is required by
+ * 			stdio.
+ *
+ * @return Received character, casted to an int.
+ */
+int uart_getchar(FILE *f)
+{
+	PORTA.OUTSET = PIN2_bm;
+
+	uint8_t c;
+	uart_t *u = fdev_get_udata(f);
+
+	while(! buffer_get(&(u->read_buffer), &c));		// Block while read_buffer is empty
+#ifdef UART_ECHO_ON
+	uart_putchar(c);
+#endif
+
+	PORTA.OUTCLR = PIN2_bm;
+
+	return (int) c;
+}
+
+
+static inline void dre_handler(uart_t *u)
+{
+	USART_t *usart = u->usart;
+	buffer_t *buffer = &(u->write_buffer);
+	uint8_t c;
+
+	if(buffer_get(buffer, &c))
+		usart->DATA = c;
+	else
+		usart->CTRLA = (usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc;
+}
+
+
+static inline void rxc_handler(uart_t *u)
+{
+	buffer_put(&(u->read_buffer), u->usart->DATA);
+}
+
+
+/**
+ * Data Register Empty ISR
+ *
+ * This ISR is called whenever the UART is ready to transmit the next byte, and it has
+ * been enabled in uart_putchar(). This interrupt is disabled as soon as write_buffer
+ * becomes empty (or else it would be called continuously).
+ */
+ISR(DEBUG_DRE_VECT)
+{
+	PORTA.OUTSET = PIN4_bm;
+	dre_handler(&db_uart);
+	PORTA.OUTCLR = PIN4_bm;
+}
+
+
+/**
+ * Receive Complete ISR
+ *
+ * This ISR is called whenever the UART has received a byte.
+ */
+ISR(DEBUG_RXC_VECT)
+{
+	PORTA.OUTSET = PIN6_bm;
+	rxc_handler(&db_uart);
+	PORTA.OUTCLR = PIN6_bm;
+}
+
+
+ISR(PANDABOARD_DRE_VECT)
+{
+	dre_handler(&pb_uart);
+}
+
+
+ISR(PANDABOARD_RXC_VECT)
+{
+	rxc_handler(&pb_uart);
+}
