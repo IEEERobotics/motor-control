@@ -60,6 +60,8 @@
 #include "timer.h"
 #include "compass.h"
 #include "ultrasonic.h"
+#include "i2c.h"
+#include "servo_parallax.h"
 
 
 /**
@@ -68,18 +70,15 @@
  */
 int main()
 {
-	PORTE.DIRSET = 0xff;
-	PORTA.DIRSET = 0xff;
-	PORTE.OUT = 0xff;
-	PORTA.OUT = 0x00;
-
-	init_clock();		// Set up the system clock
-	init_motors();		// Set up everything to do with motor control
-	init_ms_timer();	// Initialize timer interrupt
-//	init_ultrasonic();
-	init_uart();		// Set up the UART
+	init_clock();						// Set up the system clock
+	init_motors();						// Set up everything to do with motor control
+	init_ms_timer();					// Initialize timer interrupt
+	init_ultrasonic();
+	init_uarts();						// Set up the UART
+	init_i2c();
 //	init_compass();
-	print_banner();		// Print welcome message to the serial port
+	init_servo_parallax();
+	print_banner();						// Print welcome message to the serial port
 
 	for(;;)
 	{

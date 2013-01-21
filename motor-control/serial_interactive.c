@@ -62,7 +62,7 @@ const char *help = "heading [angle]\n"
 				   "motor_pid [Kp] [Ki] [Kd]\n"
 				   "pwm [a|b|c|d] [0-10000]\n"
 				   "sensors\n"
-				   "servo [0-15] [0-1000]\n"
+				   "servo [channel] [ramp] [angle]\n"
 				   "set [heading] [speed]\n"
 				   "sizeofs\n"
 				   "status\n";
@@ -271,7 +271,7 @@ static inline void exec_servo(void)
 
 	if(channel != NULL && ramp != NULL && angle != NULL)
 	{
-//		parallax_set_angle(atoi(channel), atoi(angle), atoi(ramp));
+		parallax_set_angle(atoi(channel), atoi(angle), atoi(ramp));
 	}
 	else
 	{
