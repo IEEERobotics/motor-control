@@ -9,8 +9,8 @@
 #define ACCELEROMETER_H_
 
 
-#define ACCEL_TWI_ADDRESS							0x1c
-
+#define ACCEL_TWI_ADDRESS							0x1d
+#define ACCEL_GSCALE								2		// +/- 2, 4, or 8 G's
 
 #define ACCEL_STATUS								0x00
 #define ACCEL_OUT_X_MSB								0x01
@@ -194,6 +194,18 @@
 #define ACCEL_CTRL_REG5_INT_CFG_PULSE_bm			(1<<3)
 #define ACCEL_CTRL_REG5_INT_CFG_FF_MT_bm			(1<<2)
 #define ACCEL_CTRL_REG5_INT_CFG_DRDY_bm				(1<<0)
+
+typedef struct accelerometer_data {
+	short int x, y, z;
+} accelerometer_data_t;
+
+
+void init_accelerometer(void);
+bool accelerometer_write_ram(uint8_t address, uint8_t data);
+bool accelerometer_read_ram(uint8_t address, uint8_t *rx_data);
+bool accelerometer_standby(void);
+bool accelerometer_active(void);
+bool accelerometer_get_data(accelerometer_data_t *a);
 
 
 #endif /* ACCELEROMETER_H_ */
