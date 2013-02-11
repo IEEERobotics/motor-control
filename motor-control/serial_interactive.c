@@ -16,6 +16,7 @@
 #include "ultrasonic.h"
 #include "compass.h"
 #include "timer.h"
+#include "accelerometer.h"
 #include "serial_interactive.h"
 
 #define NEXT_TOKEN()	(find_token(strtok(NULL, delimiters)))
@@ -240,23 +241,29 @@ static inline void exec_sensors(void)
 	int us_bottom;
 	int us_right;
 	int us_back;
-	const char *fmt_string = "\f"
-							 "heading: %d\n"
-							 "us_left: %d\n"
-							 "us_right: %d\n"
-							 "us_front: %d\n"
-							 "us_back: %d\n"
-							 "us_bottom: %d\n";
+	accelerometer_data_t a;
+	const char *fmt_string = "heading: %d\r\n"
+							 "us_left: %d\r\n"
+							 "us_right: %d\r\n"
+							 "us_front: %d\r\n"
+							 "us_back: %d\r\n"
+							 "us_bottom: %d\r\n"
+							 "accel_x: %d\r\n"
+							 "accel_y: %d\r\n"
+							 "accel_z: %d\r\n";
+
 	for(;;)
 	{
 		while(! compass_read(&heading));
+		while(! accelerometer_get_data(&a));
+
 		us_left = get_ultrasonic_distance(ULTRASONIC_LEFT);
 		us_front = get_ultrasonic_distance(ULTRASONIC_FRONT);
 		us_bottom = get_ultrasonic_distance(ULTRASONIC_BOTTOM);
 		us_right = get_ultrasonic_distance(ULTRASONIC_RIGHT);
 		us_back = get_ultrasonic_distance(ULTRASONIC_BACK);
 
-		printf(fmt_string, heading, us_left, us_right, us_front, us_back, us_bottom);
+		printf(fmt_string, heading, us_left, us_right, us_front, us_back, us_bottom, a.x, a.y, a.z);
 
 		for(ms_timer=0; ms_timer<10;);
 	}
