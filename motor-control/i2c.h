@@ -9,6 +9,7 @@
 #define I2C_H_
 
 #include <avr/io.h>
+#include <stdbool.h>
 
 #define I2C_TWI_PORT			PORTC
 #define I2C_TWI					TWIC

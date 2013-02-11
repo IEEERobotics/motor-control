@@ -23,8 +23,8 @@ TWI_Master_t twi;
 void init_i2c(void)
 {
 	// Enable pullup resistors for I2C bus
-	I2C_TWI_PORT.PIN0CTRL |= PORT_OPC_PULLUP_gc;
-	I2C_TWI_PORT.PIN1CTRL |= PORT_OPC_PULLUP_gc;
+//	I2C_TWI_PORT.PIN0CTRL |= PORT_OPC_PULLUP_gc;
+//	I2C_TWI_PORT.PIN1CTRL |= PORT_OPC_PULLUP_gc;
 
 	TWI_MasterInit(&twi,
 				   &I2C_TWI,
