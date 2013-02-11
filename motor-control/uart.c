@@ -96,11 +96,6 @@ int uart_putchar(char c, FILE *f)
 {
 	uart_t *u = (uart_t *)fdev_get_udata(f);
 
-#ifdef USE_DOS_NEWLINES
-	if(c == '\n')
-		uart_putchar('\r', f);
-#endif
-
 	while(! buffer_put(&(u->write_buffer), c));
 
 	// Enable Data Register Empty interrupt. This will be disabled once all of the data
@@ -126,9 +121,6 @@ int uart_getchar(FILE *f)
 	uint8_t c;
 
 	while(! buffer_get(&(u->read_buffer), &c));	// Block while read_buffer is empty
-#ifdef UART_ECHO_ON
-	uart_putchar(c);
-#endif
 
 	return (int) c;
 }

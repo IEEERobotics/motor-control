@@ -14,10 +14,8 @@
 #include <stdio.h>
 #include "buffer.h"
 
-#define UART_BUFFER_SIZE	128					// UART read and write buffer size
+#define UART_BUFFER_SIZE	255					// UART read and write buffer size
 #define UART_DREINTLVL	USART_DREINTLVL_MED_gc	// Data Register Empty interrupt priority
-#define UART_USE_DOS_NEWLINES					// Use CRLF line endings
-//#define UART_ECHO_ON							// Echo received characters back to the terminal
 
 #define DEBUG_USART					USARTC0
 #define DEBUG_USART_DRE_VECT		USARTC0_DRE_vect

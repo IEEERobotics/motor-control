@@ -54,21 +54,21 @@ const char *tokens[] = { "a",
 };
 
 const char *prompt = "> ";
-const char *banner = "\fNCSU IEEE 2012 Hardware Team Motor Controller\n"
-					 "Type \"help\" for a list of available commands.";
-const char *help = "heading [angle]\n"
-				   "heading_pid [Kp] [Ki] [Kd]\n"
-				   "help\n"
-				   "motor_pid [Kp] [Ki] [Kd]\n"
-				   "pwm [a|b|c|d] [0-10000]\n"
-				   "sensors\n"
-				   "servo [channel] [ramp] [angle]\n"
-				   "set [heading] [speed]\n"
-				   "sizeofs\n"
-				   "status\n";
-const char *error = "Bad command.";
-const char *bad_motor = "Bad motor.";
-const char *not_implemented = "Not implemented.";
+const char *banner = "\x1b[2J\x1b[HNCSU IEEE 2012 Hardware Team Motor Controller\r\n"
+					 "Type \"help\" for a list of available commands.\r\n";
+const char *help = "heading [angle]\r\n"
+				   "heading_pid [Kp] [Ki] [Kd]\r\n"
+				   "help\r\n"
+				   "motor_pid [Kp] [Ki] [Kd]\r\n"
+				   "pwm [a|b|c|d] [0-10000]\r\n"
+				   "sensors\r\n"
+				   "servo [channel] [ramp] [angle]\r\n"
+				   "set [heading] [speed]\r\n"
+				   "sizeofs\r\n"
+				   "status\r\n";
+const char *error = "Bad command.\r\n";
+const char *bad_motor = "Bad motor.\r\n";
+const char *not_implemented = "Not implemented.\r\n";
 
 
 /**
@@ -355,7 +355,7 @@ static inline void parse_command(void)
 		}
 	}
 
-	printf("\n");
+	printf("\r\n");
 	if(i == 0)
 		return;		// Empty string
 
