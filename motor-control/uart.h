@@ -12,6 +12,7 @@
 #define SERIAL_STDIO_H_
 
 #include <stdio.h>
+#include <avr/io.h>
 #include "buffer.h"
 
 #define UART_BUFFER_SIZE	255					// UART read and write buffer size

@@ -19,3 +19,5 @@ motor-control/Release/makefile
 *.eep
 
 *.hex
+
+motor-control/.settings/de.innot.avreclipse.core.prefs
