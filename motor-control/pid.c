@@ -6,16 +6,16 @@
  * @section Description
  *
  * Functions implementing a software PID controller
- *
- * @todo Set up timer interrupt to run compute_pid()
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <util/atomic.h>
+#include "debug.h"
 #include "motor.h"
 #include "compass.h"
+#include "pid.h"
 
 #define LIMIT(x, min, max)	((x) < (min)) ? (min) : (((x) > (max)) ? (max) : (x))
 

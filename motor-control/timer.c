@@ -8,6 +8,7 @@
 #include <avr/interrupt.h>
 #include <stdbool.h>
 #include "motor.h"
+#include "debug.h"
 #include "timer.h"
 
 volatile uint8_t ms_timer = 0;
@@ -90,6 +91,8 @@ void init_ms_timer(void)
  */
 ISR(TCC0_OVF_vect)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_MSTIMER);
+
 	ms_timer++;
 
 	if(pid_enabled)
@@ -101,6 +104,8 @@ ISR(TCC0_OVF_vect)
 		update_speed(&MOTOR_RIGHT_FRONT);
 		update_speed(&MOTOR_RIGHT_BACK);
 	}
+
+	DEBUG_EXIT_ISR(DEBUG_ISR_MSTIMER);
 }
 
 

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "i2c.h"
+#include "debug.h"
 #include "accelerometer.h"
 
 
@@ -53,6 +54,8 @@ void init_accelerometer(void)
 {
 	uint8_t xyz_data_cfg;
 
+	DEBUG_STATUS(DEBUG_INIT_ACCELEROMETER);
+
 	xyz_data_cfg = ACCEL_GSCALE;
 	if(xyz_data_cfg > 8)
 		xyz_data_cfg = 8;
@@ -62,6 +65,8 @@ void init_accelerometer(void)
 	while(! accelerometer_write_ram(ACCEL_XYZ_DATA_CFG, xyz_data_cfg));
 	while(! accelerometer_write_ram(ACCEL_CTRL_REG2, 0x80));
 	while(! accelerometer_active());
+
+	DEBUG_CLEAR_STATUS();
 }
 
 

@@ -63,6 +63,7 @@
 #include "i2c.h"
 #include "servo_parallax.h"
 #include "accelerometer.h"
+#include "debug.h"
 
 
 /**
@@ -74,6 +75,7 @@ int main()
 	uint16_t i;
 	for(i=0; i<0xffff; i++) __asm__ __volatile("nop");
 
+	init_debug();						// Use ports H and J for debugging
 	init_clock();						// Set up the system clock
 	init_motors();						// Set up everything to do with motor control
 	init_ms_timer();					// Initialize timer interrupt

@@ -12,6 +12,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "buffer.h"
+#include "debug.h"
 #include "uart.h"
 
 uart_t debug_uart, pandaboard_uart, servo_uart;
@@ -135,12 +136,16 @@ int uart_getchar(FILE *f)
  */
 inline void dre_interrupt_handler(uart_t *u)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_DRE);
+
 	uint8_t c;
 
 	if(buffer_get(&(u->write_buffer), &c))
 		u->usart->DATA = c;
 	else
 		u->usart->CTRLA = (u->usart->CTRLA & ~USART_DREINTLVL_gm) | USART_DREINTLVL_OFF_gc;
+
+	DEBUG_EXIT_ISR(DEBUG_ISR_DRE);
 }
 
 
@@ -151,7 +156,9 @@ inline void dre_interrupt_handler(uart_t *u)
  */
 inline void rxc_interrupt_handler(uart_t *u)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_RXC);
 	buffer_put(&(u->read_buffer), u->usart->DATA);
+	DEBUG_EXIT_ISR(DEBUG_ISR_RXC);
 }
 
 

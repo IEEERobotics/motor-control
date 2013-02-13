@@ -10,6 +10,7 @@
 #include <avr/interrupt.h>
 #include <stdbool.h>
 #include "clock.h"
+#include "debug.h"
 #include "twi_master_driver.h"
 #include "i2c.h"
 
@@ -78,5 +79,7 @@ bool i2c_send_receive(uint8_t address,
 
 ISR(I2C_TWI_VECT)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_I2C);
 	TWI_MasterInterruptHandler(&twi);
+	DEBUG_EXIT_ISR(DEBUG_ISR_I2C);
 }

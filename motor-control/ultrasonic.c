@@ -9,6 +9,7 @@
 #include <util/atomic.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "debug.h"
 #include "ultrasonic.h"
 
 #define CURRENT_SENSOR			(usensors[current_sensor])
@@ -149,7 +150,9 @@ int get_ultrasonic_distance(ultrasonic_id_t index)
  */
 ISR(ULTRASONIC_TIMER_VECT)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_US_TIMER);
 	set_result(ULTRASONIC_TIMER.CCA);
+	DEBUG_EXIT_ISR(DEBUG_ISR_US_TIMER);
 }
 
 
@@ -158,8 +161,12 @@ ISR(ULTRASONIC_TIMER_VECT)
  */
 ISR(ULTRASONIC_TIMER_OVF_VECT)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_US_TIMER_OVF);
+
 	if(measurement_in_progress)
 		set_result(-1);
 
 	ping_ultrasonic();
+
+	DEBUG_EXIT_ISR(DEBUG_ISR_US_TIMER_OVF);
 }

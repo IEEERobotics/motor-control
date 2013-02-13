@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include "clock.h"
 #include "i2c.h"
+#include "debug.h"
 #include "compass.h"
 
 
@@ -19,11 +20,15 @@
  */
 void init_compass(void)
 {
+	DEBUG_STATUS(DEBUG_INIT_COMPASS);
+
 	/* Initialize compass state. Consider adding a timeout so we don't get stuck here. */
 	while(! compass_wakeup());
 	// Continuous mode, 20Hz update frequency
 	while(! compass_write_ram(COMPASS_RAM_OPMODE,
 			COMPASS_OPMODE_FREQ_20HZ | COMPASS_OPMODE_CONTINUOUS));
+
+	DEBUG_CLEAR_STATUS();
 }
 
 
