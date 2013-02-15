@@ -57,7 +57,7 @@ const char *tokens[] = { "a",
 const char *prompt = "> ";
 const char *banner = "\x1b[2J\x1b[HNCSU IEEE 2012 Hardware Team Motor Controller\r\n"
 					 "Type \"help\" for a list of available commands.\r\n";
-const char *help = "heading [angle]\r\n"
+const char *help = "heading [angle] [speed]\r\n"
 				   "heading_pid [Kp] [Ki] [Kd]\r\n"
 				   "help\r\n"
 				   "motor_pid [Kp] [Ki] [Kd]\r\n"
@@ -152,7 +152,17 @@ static inline motor_t *get_motor(token_t token)
 
 static inline void exec_heading(void)
 {
-	puts(not_implemented);
+	char *heading = NEXT_STRING();
+	char *speed = NEXT_STRING();
+
+	if(heading != NULL && speed != NULL)
+	{
+		change_setpoint(atoi(heading), atoi(speed));
+	}
+	else
+	{
+		puts(error);
+	}
 }
 
 
