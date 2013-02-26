@@ -46,6 +46,7 @@ const char *tokens[] = { "a",
 					   	 "help",
 					   	 "motor_pid",
 					   	 "pwm",
+					   	 "reset",
 					   	 "s",
 					   	 "sensors",
 					   	 "servo",
@@ -65,6 +66,7 @@ const char *help = "heading [angle] [speed]\r\n"
 				   "help\r\n"
 				   "motor_pid [Kp] [Ki] [Kd]\r\n"
 				   "pwm [a|b|c|d] [0-10000]\r\n"
+				   "reset"
 				   "sensors\r\n"
 				   "servo [channel] [ramp] [angle]\r\n"
 				   "set [heading] [speed]\r\n"
@@ -246,6 +248,12 @@ static inline void exec_pwm(void)
 		puts(bad_motor);
 	else
 		puts(error);
+}
+
+
+static inline void exec_reset(void)
+{
+	RST.CTRL = RST_SWRST_bm;
 }
 
 
@@ -500,6 +508,9 @@ static inline void parse_command(void)
 		break;
 	case TOKEN_PWM:
 		exec_pwm();
+		break;
+	case TOKEN_RESET:
+		exec_reset();
 		break;
 	case TOKEN_S:
 	case TOKEN_SENSORS:
