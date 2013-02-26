@@ -334,11 +334,11 @@ static inline void exec_status(void)
 {
 	int i;
 
-	puts("a_error a_out b_error b_out c_error c_out d_error d_out heading_error heading_out\n[");
+	puts("a_error a_out b_error b_out c_error c_out d_error d_out heading_error heading_out\r\n[");
 
 	for(i=0; i<PID_NUM_SAMPLES; i++)
 	{
-		printf("%d %d %d %d %d %d %d %d %d %d\n",
+		printf("%d %d %d %d %d %d %d %d %d %d\r\n",
 				motor_a.controller.samples[i].error,
 				motor_a.controller.samples[i].output,
 				motor_b.controller.samples[i].error,
