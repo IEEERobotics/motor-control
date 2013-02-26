@@ -51,7 +51,10 @@ const char *tokens[] = { "a",
 					   	 "servo",
 					   	 "set",
 					   	 "sizeofs",
-					   	 "status"
+					   	 "status",
+					   	 "stop",
+					   	 "straight",
+					   	 "turn_in_place"
 };
 
 const char *prompt = "> ";
@@ -66,7 +69,10 @@ const char *help = "heading [angle] [speed]\r\n"
 				   "servo [channel] [ramp] [angle]\r\n"
 				   "set [heading] [speed]\r\n"
 				   "sizeofs\r\n"
-				   "status\r\n";
+				   "status\r\n"
+				   "stop\r\n"
+				   "straight [pwm]\r\n"
+				   "turn_in_place [pwm]\r\n";
 const char *error = "Bad command.\r\n";
 const char *bad_motor = "Bad motor.\r\n";
 const char *not_implemented = "Not implemented.\r\n";
@@ -349,6 +355,105 @@ static inline void exec_status(void)
 }
 
 
+static inline void exec_stop(void)
+{
+	pid_enabled = false;
+
+	change_direction(&motor_a, DIR_BRAKE);
+	change_direction(&motor_b, DIR_BRAKE);
+	change_direction(&motor_c, DIR_BRAKE);
+	change_direction(&motor_d, DIR_BRAKE);
+	update_speed(&motor_a);
+	update_speed(&motor_b);
+	update_speed(&motor_c);
+	update_speed(&motor_d);
+}
+
+
+static inline void exec_straight(void)
+{
+	char *pwm_str = NEXT_STRING();
+	int pwm;
+	direction_t dir;
+
+	if(pwm_str != NULL)
+	{
+		pwm = atoi(pwm_str);
+
+		if(pwm < 0)
+		{
+			dir = DIR_REVERSE;
+			pwm = -pwm;
+		}
+		else
+		{
+			dir = DIR_FORWARD;
+		}
+
+		pid_enabled = false;
+		change_pwm(&motor_a, pwm);
+		change_pwm(&motor_b, pwm);
+		change_pwm(&motor_c, pwm);
+		change_pwm(&motor_d, pwm);
+		change_direction(&motor_a, dir);
+		change_direction(&motor_b, dir);
+		change_direction(&motor_c, dir);
+		change_direction(&motor_d, dir);
+		update_speed(&motor_a);
+		update_speed(&motor_b);
+		update_speed(&motor_c);
+		update_speed(&motor_d);
+	}
+	else
+	{
+		puts(error);
+	}
+}
+
+
+static inline void exec_turn_in_place(void)
+{
+	char *pwm_str = NEXT_STRING();
+	int pwm;
+	direction_t left_dir, right_dir;
+
+	if(pwm_str != NULL)
+	{
+		pwm = atoi(pwm_str);
+
+		if(pwm < 0)
+		{
+			left_dir = DIR_REVERSE;
+			right_dir = DIR_FORWARD;
+			pwm = -pwm;
+		}
+		else
+		{
+			left_dir = DIR_FORWARD;
+			right_dir = DIR_REVERSE;
+		}
+
+		pid_enabled = false;
+		change_pwm(&motor_a, pwm);
+		change_pwm(&motor_b, pwm);
+		change_pwm(&motor_c, pwm);
+		change_pwm(&motor_d, pwm);
+		change_direction(&motor_a, left_dir);
+		change_direction(&motor_b, left_dir);
+		change_direction(&motor_c, right_dir);
+		change_direction(&motor_d, right_dir);
+		update_speed(&motor_a);
+		update_speed(&motor_b);
+		update_speed(&motor_c);
+		update_speed(&motor_d);
+	}
+	else
+	{
+		puts(error);
+	}
+}
+
+
 /**
  * Read a command from the serial terminal and parse it.
  */
@@ -411,6 +516,15 @@ static inline void parse_command(void)
 		break;
 	case TOKEN_STATUS:
 		exec_status();
+		break;
+	case TOKEN_STOP:
+		exec_stop();
+		break;
+	case TOKEN_STRAIGHT:
+		exec_straight();
+		break;
+	case TOKEN_TURN_IN_PLACE:
+		exec_turn_in_place();
 		break;
 	default:
 		puts(error);

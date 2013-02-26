@@ -29,6 +29,9 @@ typedef enum token {
 	TOKEN_SET 			= 12,
 	TOKEN_SIZEOFS		= 13,
 	TOKEN_STATUS 		= 14,
+	TOKEN_STOP			= 15,
+	TOKEN_STRAIGHT		= 16,
+	TOKEN_TURN_IN_PLACE	= 17,
 } token_t;
 
 void test_serial_out(void);
