@@ -68,7 +68,8 @@ void init_uarts()
 	PORTE.DIRSET = PIN3_bm;		// pandaboard_uart
 	PORTE.DIRCLR = PIN2_bm;
 
-	init_uart(&debug_uart, &DEBUG_USART, 2094, -7);				// 115200 baud at 32 MHz clock
+//	init_uart(&debug_uart, &DEBUG_USART, 2094, -7);				// 115200 baud at 32 MHz clock
+	init_uart(&debug_uart, &DEBUG_USART, 2158, -6);				// 57600 baud at 32 MHZ clock
 	init_uart(&pandaboard_uart, &PANDABOARD_USART, 2094, -7);
 	init_uart(&servo_uart, &SERVO_USART, 3329, -2);				// 2400 baud at 32 MHz clock
 
