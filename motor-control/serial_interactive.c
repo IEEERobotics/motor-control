@@ -46,6 +46,7 @@ const char *tokens[] = { "a",
 					   	 "help",
 					   	 "motor_pid",
 					   	 "pwm",
+					   	 "pwm_drive",
 					   	 "reset",
 					   	 "s",
 					   	 "sensors",
@@ -66,7 +67,8 @@ const char *help = "heading [angle] [speed]\r\n"
 				   "help\r\n"
 				   "motor_pid [Kp] [Ki] [Kd]\r\n"
 				   "pwm [a|b|c|d] [0-10000]\r\n"
-				   "reset"
+				   "pwm_drive [left] [right]"
+				   "reset\r\n"
 				   "sensors\r\n"
 				   "servo [channel] [ramp] [angle]\r\n"
 				   "set [heading] [speed]\r\n"
@@ -251,8 +253,61 @@ static inline void exec_pwm(void)
 }
 
 
+static inline void exec_pwm_drive(void)
+{
+	char *left_str = NEXT_STRING();
+	char *right_str = NEXT_STRING();
+	int left, right;
+
+	if(left_str != NULL && right_str != NULL)
+	{
+		left = atoi(left_str);
+		right = atoi(right_str);
+		pid_enabled = false;
+
+		if(left > 0)
+		{
+			change_direction(&MOTOR_LEFT_FRONT, DIR_FORWARD);
+			change_direction(&MOTOR_LEFT_BACK, DIR_FORWARD);
+		}
+		else
+		{
+			change_direction(&MOTOR_LEFT_FRONT, DIR_REVERSE);
+			change_direction(&MOTOR_LEFT_BACK, DIR_REVERSE);
+			left = -left;
+		}
+
+		if(right > 0)
+		{
+			change_direction(&MOTOR_RIGHT_FRONT, DIR_FORWARD);
+			change_direction(&MOTOR_RIGHT_BACK, DIR_FORWARD);
+		}
+		else
+		{
+			change_direction(&MOTOR_RIGHT_FRONT, DIR_REVERSE);
+			change_direction(&MOTOR_RIGHT_BACK, DIR_REVERSE);
+			right = -right;
+		}
+
+		change_pwm(&MOTOR_LEFT_FRONT, left);
+		change_pwm(&MOTOR_LEFT_BACK, left);
+		change_pwm(&MOTOR_RIGHT_FRONT, right);
+		change_pwm(&MOTOR_RIGHT_BACK, right);
+		update_speed(&MOTOR_LEFT_FRONT);
+		update_speed(&MOTOR_LEFT_BACK);
+		update_speed(&MOTOR_RIGHT_FRONT);
+		update_speed(&MOTOR_RIGHT_BACK);
+	}
+	else
+	{
+		puts(error);
+	}
+}
+
+
 static inline void exec_reset(void)
 {
+	CCP = CCP_IOREG_gc;
 	RST.CTRL = RST_SWRST_bm;
 }
 
@@ -508,6 +563,9 @@ static inline void parse_command(void)
 		break;
 	case TOKEN_PWM:
 		exec_pwm();
+		break;
+	case TOKEN_PWM_DRIVE:
+		exec_pwm_drive();
 		break;
 	case TOKEN_RESET:
 		exec_reset();
