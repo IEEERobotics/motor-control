@@ -123,6 +123,10 @@ void compute_next_pid_iteration(void)
 	int left_speed_setpoint;
 	int right_speed_setpoint;
 
+#ifdef PID_IGNORE_HEADING
+	left_speed_setpoint = speed_setpoint;
+	right_speed_setpoint = speed_setpoint;
+#else
 	while(! compass_read(&current_heading));	// Get current heading, run again if error
 
 	heading_error = normalize_heading(heading_setpoint - current_heading);
@@ -141,6 +145,7 @@ void compute_next_pid_iteration(void)
 	heading_mv = compute_pid(&heading_pid, heading_error);
 	right_speed_setpoint += heading_mv;
 	left_speed_setpoint -= heading_mv;
+#endif
 
 	compute_motor_pid(&MOTOR_LEFT_FRONT, left_speed_setpoint);
 	compute_motor_pid(&MOTOR_LEFT_BACK, left_speed_setpoint);

@@ -15,6 +15,8 @@
 #include <stdbool.h>
 #include "motor.h"
 
+#define PID_IGNORE_HEADING
+
 #define PID_MOTOR_KP			20
 #define PID_MOTOR_KI			2		// Ki/0.005; Ki=0.01
 #define PID_MOTOR_KD			5		// Kd*0.005; Kd=1000
