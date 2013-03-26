@@ -24,6 +24,7 @@
 #define DEBUG_ISR_RXC									PIN3_bm
 #define DEBUG_ISR_US_TIMER								PIN4_bm
 #define DEBUG_ISR_US_TIMER_OVF							PIN5_bm
+#define DEBUG_ISR_ENCODER								PIN6_bm
 
 #define DEBUG_ENTER_ISR(mask)							( DEBUG_ISR_PORT.OUTSET = mask )
 #define DEBUG_EXIT_ISR(mask)							( DEBUG_ISR_PORT.OUTCLR = mask )

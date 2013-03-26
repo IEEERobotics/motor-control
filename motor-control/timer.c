@@ -111,23 +111,31 @@ ISR(TCC0_OVF_vect)
 
 ISR(TCC1_CCA_vect)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_ENCODER);
 	motor_a.encoder_count++;
+	DEBUG_EXIT_ISR(DEBUG_ISR_ENCODER);
 }
 
 
 ISR(TCD1_CCA_vect)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_ENCODER);
 	motor_b.encoder_count++;
+	DEBUG_EXIT_ISR(DEBUG_ISR_ENCODER);
 }
 
 
 ISR(TCE1_CCA_vect)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_ENCODER);
 	motor_c.encoder_count++;
+	DEBUG_EXIT_ISR(DEBUG_ISR_ENCODER);
 }
 
 
 ISR(TCF1_CCA_vect)
 {
+	DEBUG_ENTER_ISR(DEBUG_ISR_ENCODER);
 	motor_d.encoder_count++;
+	DEBUG_EXIT_ISR(DEBUG_ISR_ENCODER);
 }
