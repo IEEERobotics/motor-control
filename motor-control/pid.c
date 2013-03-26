@@ -15,14 +15,18 @@
 #include "debug.h"
 #include "motor.h"
 #include "compass.h"
+#include "timer.h"
 #include "pid.h"
 
 #define LIMIT(x, min, max)	((x) < (min)) ? (min) : (((x) > (max)) ? (max) : (x))
 
-int heading_setpoint, speed_setpoint;
+static int heading_setpoint;
+static int motor_setpoint;		// either speed or distance, depending on PID_CONTROL_SPEED
 controller_t heading_pid;
-bool pid_enabled = false;
-
+static bool pid_enabled = false;
+static unsigned long int time = 0;
+static unsigned long distance = 0;
+static bool turning = false;
 
 static inline void reset_controller(controller_t *c)
 {
@@ -44,14 +48,15 @@ static inline int compute_pid(controller_t *pid, int error)
 	int p, i, d, output;
 	volatile sample_t *sample;
 
+	p = pid->p_const * error;
+	i = pid->i_sum * pid->i_const;
+	d = pid->d_const * (error - pid->prev_input);
+
 	pid->i_sum += error;
 	pid->i_sum = LIMIT(pid->i_sum, pid->i_sum_min, pid->i_sum_max);
 
-	p = pid->p_const * error;
-	i = pid->i_const * pid->i_sum;
-	d = pid->d_const * (error - pid->prev_input);
-
 	pid->prev_input = error;
+//	output = LIMIT(p + i + d, 0, PWM_PERIOD);
 	output = p + i + d;
 
 	if(pid->sample_counter < PID_NUM_SAMPLES)
@@ -65,9 +70,18 @@ static inline int compute_pid(controller_t *pid, int error)
 }
 
 
-static inline int get_motor_speed(motor_t *motor)
+static inline int get_motor_pv(motor_t *motor)
 {
+#ifndef PID_CONTROL_SPEED
 	return *(motor->reg.enc) ? (ENC_SAMPLE_HZ / (unsigned short int)*(motor->reg.enc)) : 0;
+
+	// units are ticks/min
+//	unsigned long int pv = (motor->encoder_count - motor->prev_encoder_count) * (60000u/MS_TIMER_PER);
+//	motor->prev_encoder_count = motor->encoder_count;
+//	return pv;
+#else
+	return motor->encoder_count;
+#endif
 }
 
 
@@ -82,19 +96,27 @@ static inline void compute_motor_pid(motor_t *motor, int setpoint)
 	int error;
 	int mv;
 
-	if(setpoint > 0)
+	if((motor->encoder_count < distance) || turning)
 	{
-		motor->response.dir = DIR_FORWARD;
+		if(setpoint > 0)
+		{
+			motor->response.dir = DIR_FORWARD;
+		}
+		else if(setpoint < 0)
+		{
+			motor->response.dir = DIR_REVERSE;
+			setpoint = -setpoint;
+		}
+
+		error = setpoint - get_motor_pv(motor);
+		mv = compute_pid(&(motor->controller), error);
+
+		motor->response.pwm = LIMIT(mv, 0, PWM_PERIOD);
 	}
-	else if(setpoint < 0)
+	else	// We've reached the target distance
 	{
-		motor->response.dir = DIR_REVERSE;
+		motor->response.pwm = 0;
 	}
-
-	error = abs(setpoint - get_motor_speed(motor));
-	mv = compute_pid(&(motor->controller), error);
-
-	motor->response.pwm = LIMIT(mv, 0, PWM_PERIOD);
 }
 
 
@@ -112,6 +134,12 @@ static inline int normalize_heading(int heading)
 }
 
 
+static inline int get_motor_setpoint(motor_t *m)
+{
+	return motor_setpoint;
+}
+
+
 /**
  * Top-level function to calculate the next heading and speed PID iteration
  */
@@ -120,37 +148,53 @@ void compute_next_pid_iteration(void)
 	uint16_t current_heading;	// Current absolute heading
 	int heading_error;			// Error in heading
 	int heading_mv;				// Heading manipulated variable (output of heading PID)
-	int left_speed_setpoint;
-	int right_speed_setpoint;
+	int left_setpoint;
+	int right_setpoint;
 
 #ifdef PID_IGNORE_HEADING
-	left_speed_setpoint = speed_setpoint;
-	right_speed_setpoint = speed_setpoint;
+	left_setpoint = get_motor_setpoint(&MOTOR_LEFT);
+	right_setpoint = get_motor_setpoint(&MOTOR_RIGHT);
 #else
 	while(! compass_read(&current_heading));	// Get current heading, run again if error
 
 	heading_error = normalize_heading(heading_setpoint - current_heading);
 
-	if(heading_error < PID_HEADING_TOLERANCE)
+	if(abs(heading_error) < PID_HEADING_TOLERANCE)
 	{
-		left_speed_setpoint = speed_setpoint;
-		right_speed_setpoint = speed_setpoint;
+		if(turning)
+		{
+			turning = false;
+			clear_encoder_count();
+		}
+		left_setpoint = motor_setpoint;
+		right_setpoint = motor_setpoint;
 	}
-	else
+	else	// execute a turn
 	{
-		left_speed_setpoint = 0;
-		right_speed_setpoint = 0;
+		turning = true;
+		left_setpoint = 0;
+		right_setpoint = 0;
 	}
 
-	heading_mv = compute_pid(&heading_pid, heading_error);
-	right_speed_setpoint += heading_mv;
-	left_speed_setpoint -= heading_mv;
+	heading_mv = compute_pid(&heading_pid, heading_error) / 10;
+	right_setpoint -= heading_mv;
+	left_setpoint += heading_mv;
 #endif
 
-	compute_motor_pid(&MOTOR_LEFT_FRONT, left_speed_setpoint);
-	compute_motor_pid(&MOTOR_LEFT_BACK, left_speed_setpoint);
-	compute_motor_pid(&MOTOR_RIGHT_FRONT, right_speed_setpoint);
-	compute_motor_pid(&MOTOR_RIGHT_BACK, right_speed_setpoint);
+#if NUM_MOTORS == 4
+	compute_motor_pid(&MOTOR_LEFT_FRONT, left_setpoint);
+	compute_motor_pid(&MOTOR_LEFT_BACK, left_setpoint);
+	compute_motor_pid(&MOTOR_RIGHT_FRONT, right_setpoint);
+	compute_motor_pid(&MOTOR_RIGHT_BACK, right_setpoint);
+#elif NUM_MOTORS == 2
+	compute_motor_pid(&MOTOR_LEFT, left_setpoint);
+	compute_motor_pid(&MOTOR_RIGHT, right_setpoint);
+#endif
+
+//	printf("%d %d\r\n",
+//			heading_error,
+//			heading_mv);
+	time++;
 }
 
 
@@ -186,7 +230,7 @@ void init_controller(controller_t *controller,
  * @param relative_heading New signed heading, relative to the front of the robot
  * @param speed New target speed
  */
-void change_setpoint(int relative_heading, int speed)
+void change_setpoint(int relative_heading, int motor_sp, unsigned long new_distance)
 {
 	pid_enabled = false;
 
@@ -204,8 +248,12 @@ void change_setpoint(int relative_heading, int speed)
 	reset_controller(&(motor_c.controller));
 	reset_controller(&(motor_d.controller));
 
+	clear_encoder_count();
+
 	heading_setpoint = new_heading_setpoint;
-	speed_setpoint = speed;
+	motor_setpoint = motor_sp;
+	distance = new_distance;
+	time = 0;
 
 	pid_enabled = true;
 }
@@ -263,4 +311,22 @@ void change_motor_constants(int p, int i, int d)
 					d,
 					PID_MOTOR_ISUM_MIN,
 					PID_MOTOR_ISUM_MAX);
+}
+
+
+void pid_enable(void)
+{
+	pid_enabled = true;
+}
+
+
+void pid_disable(void)
+{
+	pid_enabled = false;
+}
+
+
+bool pid_is_enabled(void)
+{
+	return pid_enabled;
 }

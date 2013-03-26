@@ -59,8 +59,11 @@ void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel)
 	timer->CTRLA = TC_CLKSEL_DIV64_gc;
 	timer->CTRLB = TC_WGMODE_NORMAL_gc | TC1_CCAEN_bm;
 	timer->CTRLD = TC_EVACT_FRQ_gc | event_channel;
-	timer->INTCTRLB = TC_CCAINTLVL_HI_gc;
+//	timer->INTCTRLB = TC_CCAINTLVL_HI_gc;
+//	timer->INTCTRLA = TC_OVFINTLVL_HI_gc;
 	timer->PERBUF = 0xffff;
+
+//	PMIC.CTRL |= PMIC_HILVLEN_bm;
 }
 
 
@@ -95,14 +98,19 @@ ISR(TCC0_OVF_vect)
 
 	ms_timer++;
 
-	if(pid_enabled)
+	if(pid_is_enabled())
 	{
 		compute_next_pid_iteration();
 
+#if NUM_MOTORS == 4
 		update_speed(&MOTOR_LEFT_FRONT);
 		update_speed(&MOTOR_LEFT_BACK);
 		update_speed(&MOTOR_RIGHT_FRONT);
 		update_speed(&MOTOR_RIGHT_BACK);
+#elif NUM_MOTORS == 2
+		update_speed(&MOTOR_LEFT);
+		update_speed(&MOTOR_RIGHT);
+#endif
 	}
 
 	DEBUG_EXIT_ISR(DEBUG_ISR_MSTIMER);

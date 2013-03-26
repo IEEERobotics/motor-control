@@ -15,20 +15,21 @@
 #include <stdbool.h>
 #include "motor.h"
 
-#define PID_IGNORE_HEADING
+//#define PID_IGNORE_HEADING
+//#define PID_CONTROL_SPEED
 
-#define PID_MOTOR_KP			20
-#define PID_MOTOR_KI			2		// Ki/0.005; Ki=0.01
-#define PID_MOTOR_KD			5		// Kd*0.005; Kd=1000
-#define PID_MOTOR_ISUM_MIN		-10000000
-#define PID_MOTOR_ISUM_MAX		10000000
+#define PID_MOTOR_KP			15
+#define PID_MOTOR_KI			7		// Ki/0.005; Ki=0.01
+#define PID_MOTOR_KD			0		// Kd*0.005; Kd=1000
+#define PID_MOTOR_ISUM_MIN		-10000
+#define PID_MOTOR_ISUM_MAX		10000
 
-#define PID_HEADING_KP			1
+#define PID_HEADING_KP			10
 #define PID_HEADING_KI			0
 #define PID_HEADING_KD			0
 #define PID_HEADING_ISUM_MIN	-10000000
 #define PID_HEADING_ISUM_MAX	10000000
-#define PID_HEADING_TOLERANCE	10		// Robot will stop and turn in place to correct
+#define PID_HEADING_TOLERANCE	200		// Robot will stop and turn in place to correct
 										// heading if error is greater than this
 #define PID_NUM_SAMPLES 		128		// Number of samples to save in memory after changing the setpoint
 
@@ -64,12 +65,14 @@ void init_controller(controller_t *controller,
 					 int d_const,
 					 long i_sum_min,
 					 long i_sum_max);
-void change_setpoint(int relative_heading, int speed);
+void change_setpoint(int relative_heading, int motor_sp, unsigned long new_distance);
 void init_heading_controller(void);
 void change_heading_constants(int p, int i, int d);
 void change_motor_constants(int p, int i, int d);
+void pid_enable(void);
+void pid_disable(void);
+bool pid_is_enabled(void);
 
-extern bool pid_enabled;
 extern controller_t heading_pid;
 
 #endif /* PID_H_ */
