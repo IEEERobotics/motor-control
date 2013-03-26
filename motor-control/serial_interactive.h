@@ -13,28 +13,37 @@
  * the tokens array in serial.c.
  */
 typedef enum token {
-	TOKEN_UNDEF			= -1,
-	TOKEN_A 			= 0,
-	TOKEN_B 			= 1,
-	TOKEN_C 			= 2,
-	TOKEN_D 			= 3,
-	TOKEN_HEADING		= 4,
-	TOKEN_HEADING_PID	= 5,
-	TOKEN_HELP 			= 6,
-	TOKEN_MOTOR_PID		= 7,
-	TOKEN_PWM			= 8,
-	TOKEN_PWM_DRIVE		= 9,
-	TOKEN_RESET			= 10,
-	TOKEN_S				= 11,
-	TOKEN_SENSORS		= 12,
-	TOKEN_SERVO			= 13,
-	TOKEN_SET 			= 14,
-	TOKEN_SIZEOFS		= 15,
-	TOKEN_STATUS 		= 16,
-	TOKEN_STOP			= 17,
-	TOKEN_STRAIGHT		= 18,
-	TOKEN_TURN_IN_PLACE	= 19,
+	TOKEN_UNDEF = -1,
+	TOKEN_A,
+	TOKEN_B,
+	TOKEN_C,
+	TOKEN_COMPASS_START_CALIBRATION,
+	TOKEN_COMPASS_STOP_CALIBRATION,
+	TOKEN_D,
+	TOKEN_HEADING,
+	TOKEN_HEADING_PID,
+	TOKEN_HELP,
+	TOKEN_INTERACTIVE,
+	TOKEN_MOTOR_PID,
+	TOKEN_MOTOR_STEP_RESPONSE,
+	TOKEN_PWM,
+	TOKEN_PWM_DRIVE,
+	TOKEN_RESET,
+	TOKEN_S,
+	TOKEN_SENSORS,
+	TOKEN_SERVO,
+	TOKEN_SET,
+	TOKEN_SIZEOFS,
+	TOKEN_STATUS,
+	TOKEN_STOP,
+	TOKEN_STRAIGHT,
+	TOKEN_TURN_IN_PLACE,
 } token_t;
+
+typedef struct json_kv {
+	const char *key;
+	int value;
+} json_kv_t;
 
 void test_serial_out(void);
 void print_banner(void);
