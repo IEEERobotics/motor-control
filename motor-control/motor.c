@@ -36,6 +36,7 @@
 #include <util/atomic.h>
 #include "motor.h"
 #include "pid.h"
+#include "debug.h"
 #include "timer.h"
 
 /**
@@ -55,6 +56,10 @@ void init_motor_port(PORT_t *port)
 {
 	/* Set pins 0-3 as outputs (PWM signal) and pins 4-7 as inputs (quadrature encoders) */
 	port->DIR = PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm;
+	port->INTCTRL = PORT_INT1LVL_HI_gc | PORT_INT0LVL_HI_gc;
+	port->INT0MASK = PIN4_bm | PIN6_bm;
+	port->INT1MASK = PIN5_bm | PIN7_bm;
+	PMIC.CTRL |= PMIC_HILVLEN_bm;
 }
 
 
@@ -114,6 +119,7 @@ void init_motor(motor_t *motor,
 					PID_MOTOR_ISUM_MIN,
 					PID_MOTOR_ISUM_MAX);
 	motor->encoder_count = 0;
+	motor->prev_encoder_count = 0;
 }
 
 
@@ -216,4 +222,56 @@ void update_speed(motor_t *motor)
 			break;
 		}
 	}
+}
+
+
+void clear_encoder_count(void)
+{
+#if NUM_MOTORS == 4
+	MOTOR_LEFT_FRONT.encoder_count = 0;
+	MOTOR_LEFT_FRONT.prev_encoder_count = 0;
+	MOTOR_LEFT_BACK.encoder_count = 0;
+	MOTOR_LEFT_BACK.prev_encoder_count = 0;
+	MOTOR_RIGHT_FRONT.encoder_count = 0;
+	MOTOR_RIGHT_FRONT.prev_encoder_count = 0;
+	MOTOR_RIGHT_BACK.encoder_count = 0;
+	MOTOR_RIGHT_BACK.prev_encoder_count = 0;
+#elif NUM_MOTORS == 2
+	MOTOR_LEFT.encoder_count = 0;
+	MOTOR_LEFT.prev_encoder_count = 0;
+	MOTOR_RIGHT.encoder_count = 0;
+	MOTOR_RIGHT.prev_encoder_count = 0;
+#endif
+}
+
+
+ISR(PORTD_INT0_vect)
+{
+	DEBUG_ENTER_ISR(DEBUG_ISR_ENCODER);
+	motor_a.encoder_count++;
+	DEBUG_EXIT_ISR(DEBUG_ISR_ENCODER);
+}
+
+
+ISR(PORTD_INT1_vect)
+{
+	DEBUG_ENTER_ISR(DEBUG_ISR_ENCODER);
+	motor_b.encoder_count++;
+	DEBUG_EXIT_ISR(DEBUG_ISR_ENCODER);
+}
+
+
+ISR(PORTF_INT0_vect)
+{
+	DEBUG_ENTER_ISR(DEBUG_ISR_ENCODER);
+	motor_c.encoder_count++;
+	DEBUG_EXIT_ISR(DEBUG_ISR_ENCODER);
+}
+
+
+ISR(PORTF_INT1_vect)
+{
+	DEBUG_ENTER_ISR(DEBUG_ISR_ENCODER);
+	motor_d.encoder_count++;
+	DEBUG_EXIT_ISR(DEBUG_ISR_ENCODER);
 }

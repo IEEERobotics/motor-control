@@ -20,6 +20,8 @@ typedef struct motor motor_t;
 #include <avr/io.h>
 #include "pid.h"
 
+#define NUM_MOTORS		2
+
 #define PWM_PERIOD 		10000
 #define ENC_SAMPLE_HZ	(32000000/64)
 #define PWM_PORT0		PORTD
@@ -31,10 +33,15 @@ typedef struct motor motor_t;
 #define ENC_TIMER2  	TCE1
 #define ENC_TIMER3  	TCF1
 
+#if NUM_MOTORS == 4
 #define MOTOR_LEFT_FRONT	motor_a
 #define MOTOR_LEFT_BACK		motor_c
 #define MOTOR_RIGHT_FRONT	motor_b
 #define MOTOR_RIGHT_BACK	motor_d
+#elif NUM_MOTORS == 2
+#define MOTOR_LEFT			motor_a
+#define MOTOR_RIGHT			motor_d
+#endif
 
 /**
  * @enum direction
@@ -59,9 +66,9 @@ typedef enum direction {
  *
  */
 typedef struct motor_reg {
-	register16_t *pwma;		///< PWM output register A
-	register16_t *pwmb;		///< PWM output register B
-	register16_t *enc;		///< Quadrature encoder input
+	volatile register16_t *pwma;		///< PWM output register A
+	volatile register16_t *pwmb;		///< PWM output register B
+	volatile register16_t *enc;		///< Quadrature encoder input
 } motor_reg_t;
 
 
@@ -87,7 +94,8 @@ struct motor {
 	motor_reg_t reg;
 	motor_response_t response;
 	controller_t controller;
-	volatile long int encoder_count;
+	volatile unsigned long int encoder_count;
+	volatile unsigned long int prev_encoder_count;
 };
 
 extern motor_t motor_a, motor_b, motor_c, motor_d;
@@ -99,6 +107,6 @@ void change_direction(motor_t *motor, direction_t dir);
 void change_pwm(motor_t *motor, int pwm);
 void update_speed(motor_t *motor);
 void init_motors(void);
-
+void clear_encoder_count(void);
 
 #endif /* MOTOR_H_ */
