@@ -206,7 +206,9 @@ static inline void json_add_object(const char *key, json_kv_t *kv_pairs, uint8_t
 
 static inline void json_end_response(void)
 {
-	printf("}");
+	const char *newline = interactive_mode ? crlf : lf;
+
+	printf("}%s", newline);
 }
 
 
@@ -737,23 +739,25 @@ static inline void parse_command(void)
 	char input[32];
 	int i = 0;
 	char c;
-	const char *newline = interactive_mode ? crlf : lf;
 
 	while((c = getchar()) != '\r')
 	{
 		if(i < 31 && isprint(c))
 		{
 			input[i++] = c;
-			putchar(c);
+			if(interactive_mode)
+				putchar(c);
 		}
 		else if(c == BACKSPACE && i > 0)
 		{
 			i--;
-			putchar(BACKSPACE);
+			if(interactive_mode)
+				putchar(BACKSPACE);
 		}
 	}
 
-	printf(newline);
+	if(interactive_mode)
+		printf("%s", crlf);
 	if(i == 0)
 		return;		// Empty string
 
