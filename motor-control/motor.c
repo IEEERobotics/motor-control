@@ -153,10 +153,10 @@ void init_motors(void)
 	init_enc_timer(&ENC_TIMER3, TC_EVSEL_CH3_gc);
 
 	/* Initialize the 4 motor_t structs */
-	init_motor(&motor_a, &(PWM_TIMER0.CCA), &(TCD0.CCB), &(ENC_TIMER0.CCA));
-	init_motor(&motor_b, &(PWM_TIMER0.CCC), &(TCD0.CCD), &(ENC_TIMER1.CCA));
-	init_motor(&motor_c, &(PWM_TIMER1.CCA), &(TCF0.CCC), &(ENC_TIMER2.CCA));
-	init_motor(&motor_d, &(PWM_TIMER1.CCB), &(TCF0.CCD), &(ENC_TIMER3.CCA));
+	init_motor(&motor_a, &(PWM_TIMER0.CCA), &(TCD0.CCB), &(ENC_TIMER0.CCABUF));
+	init_motor(&motor_b, &(PWM_TIMER0.CCC), &(TCD0.CCD), &(ENC_TIMER1.CCABUF));
+	init_motor(&motor_c, &(PWM_TIMER1.CCA), &(TCF0.CCC), &(ENC_TIMER2.CCABUF));
+	init_motor(&motor_d, &(PWM_TIMER1.CCB), &(TCF0.CCD), &(ENC_TIMER3.CCABUF));
 }
 
 
@@ -230,17 +230,27 @@ void clear_encoder_count(void)
 #if NUM_MOTORS == 4
 	MOTOR_LEFT_FRONT.encoder_count = 0;
 	MOTOR_LEFT_FRONT.prev_encoder_count = 0;
+	MOTOR_LEFT_FRONT.reg->enc = 0;
+
 	MOTOR_LEFT_BACK.encoder_count = 0;
 	MOTOR_LEFT_BACK.prev_encoder_count = 0;
+	MOTOR_LEFT_BACK.reg->enc = 0;
+
 	MOTOR_RIGHT_FRONT.encoder_count = 0;
 	MOTOR_RIGHT_FRONT.prev_encoder_count = 0;
+	MOTOR_RIGHT_FRONT.reg->enc = 0;
+
 	MOTOR_RIGHT_BACK.encoder_count = 0;
 	MOTOR_RIGHT_BACK.prev_encoder_count = 0;
+	MOTOR_RIGHT_BACK.reg->enc = 0;
 #elif NUM_MOTORS == 2
 	MOTOR_LEFT.encoder_count = 0;
 	MOTOR_LEFT.prev_encoder_count = 0;
+	MOTOR_LEFT.reg->enc = 0;
+
 	MOTOR_RIGHT.encoder_count = 0;
 	MOTOR_RIGHT.prev_encoder_count = 0;
+	MOTOR_RIGHT.reg->enc = 0;
 #endif
 }
 
