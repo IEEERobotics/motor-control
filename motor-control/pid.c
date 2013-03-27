@@ -227,10 +227,13 @@ void init_controller(controller_t *controller,
 /**
  * Change the controller setpoint
  *
- * @param relative_heading New signed heading, relative to the front of the robot
- * @param speed New target speed
+ * @param heading_sp New heading setpoint
+ * @param motor_sp New motor speed setpoint
+ * @param new_distance New target distance
+ * @param heading_is_relative True if heading is relative to the current position of the robot,
+ * 		  or false if it is absolute.
  */
-void change_setpoint(int relative_heading, int motor_sp, unsigned long new_distance)
+void change_setpoint(int heading_sp, int motor_sp, unsigned long new_distance, bool heading_is_relative)
 {
 	pid_enabled = false;
 
@@ -240,7 +243,10 @@ void change_setpoint(int relative_heading, int motor_sp, unsigned long new_dista
 	while(! compass_read(&current_heading));	// Get current heading, run again if error
 
 	/* Calculate absolute heading, add or subtract 360 degrees if necessary */
-	new_heading_setpoint = normalize_heading(relative_heading + current_heading);
+	if(heading_is_relative)
+		new_heading_setpoint = normalize_heading(heading_sp + current_heading);
+	else
+		new_heading_setpoint = heading_sp;
 
 	reset_controller(&heading_pid);
 	reset_controller(&(motor_a.controller));

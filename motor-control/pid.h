@@ -65,7 +65,7 @@ void init_controller(controller_t *controller,
 					 int d_const,
 					 long i_sum_min,
 					 long i_sum_max);
-void change_setpoint(int relative_heading, int motor_sp, unsigned long new_distance);
+void change_setpoint(int heading_sp, int motor_sp, unsigned long new_distance, bool heading_is_relative);
 void init_heading_controller(void);
 void change_heading_constants(int p, int i, int d);
 void change_motor_constants(int p, int i, int d);

@@ -361,7 +361,7 @@ static inline void exec_move(void)
 
 	if(speed_str != NULL && distance_str != NULL)
 	{
-		change_setpoint(0, atoi(speed_str), atoi(distance_str));
+		change_setpoint(0, atoi(speed_str), atoi(distance_str), true);
 		json_respond_ok("");
 	}
 	else
@@ -627,7 +627,7 @@ static inline void exec_set(void)
 
 	if(heading_str != NULL && speed_str != NULL && distance_str != NULL)
 	{
-		change_setpoint(atoi(heading_str), atoi(speed_str), atoi(distance_str));
+		change_setpoint(atoi(heading_str), atoi(speed_str), atoi(distance_str), true);
 		json_respond_ok("TODO: block here until movement is complete");
 	}
 	else
@@ -815,7 +815,7 @@ static inline void exec_turn_rel(void)
 
 	if(heading_str != NULL)
 	{
-		change_setpoint(atoi(heading_str), 0, 0);
+		change_setpoint(atoi(heading_str), 0, 0, true);
 		json_respond_ok("TODO: This probably won't work because distance=0");
 	}
 	else
