@@ -17,6 +17,7 @@
 #include "timer.h"
 #include "accelerometer.h"
 #include "pid.h"
+#include "uart.h"
 #include "serial_interactive.h"
 
 #define NEXT_TOKEN()	(find_token(strtok(NULL, delimiters)))
@@ -50,18 +51,23 @@ const char *tokens[] = { "a",
 					   	 "interactive",
 					   	 "motor_pid",
 					   	 "motor_step_response",
+					   	 "move",
 					   	 "pwm",
 					   	 "pwm_drive",
 					   	 "reset",
 					   	 "s",
+					   	 "sensor",
 					   	 "sensors",
+					   	 "sensors_continuous",
 					   	 "servo",
 					   	 "set",
 					   	 "sizeofs",
 					   	 "status",
 					   	 "stop",
 					   	 "straight",
-					   	 "turn_in_place"
+					   	 "turn_abs",
+					   	 "turn_in_place",
+					   	 "turn_rel"
 };
 
 const char *prompt = "> ";
@@ -348,6 +354,23 @@ static inline void exec_motor_step_response(void)
 }
 
 
+static inline void exec_move(void)
+{
+	char *speed_str = NEXT_STRING();
+	char *distance_str = NEXT_STRING();
+
+	if(speed_str != NULL && distance_str != NULL)
+	{
+		change_setpoint(0, atoi(speed_str), atoi(distance_str));
+		json_respond_ok("");
+	}
+	else
+	{
+		json_respond_error(argument_error);
+	}
+}
+
+
 static inline void exec_pwm(void)
 {
 	motor_t *motor = get_motor(NEXT_TOKEN());
@@ -477,22 +500,62 @@ static inline void exec_reset(void)
 }
 
 
+static inline void exec_sensor(void)
+{
+	char *id_str = NEXT_STRING();
+	int data;
+	accelerometer_data_t a;
+
+	if(id_str != NULL)
+	{
+		switch(atoi(id_str))
+		{
+		case SENSOR_COMPASS:
+			while(! compass_read((uint16_t *) &data));
+			break;
+		case SENSOR_ACCEL_X:
+			accelerometer_get_data(&a);
+			data = a.x;
+			break;
+		case SENSOR_ACCEL_Y:
+			accelerometer_get_data(&a);
+			data = a.y;
+			break;
+		case SENSOR_ACCEL_Z:
+			accelerometer_get_data(&a);
+			data = a.z;
+			break;
+		case SENSOR_US_LEFT:
+			data = get_ultrasonic_distance(ULTRASONIC_LEFT);
+			break;
+		case SENSOR_US_FRONT:
+			data = get_ultrasonic_distance(ULTRASONIC_FRONT);
+			break;
+		case SENSOR_US_RIGHT:
+			data = get_ultrasonic_distance(ULTRASONIC_RIGHT);
+			break;
+		case SENSOR_US_BACK:
+			data = get_ultrasonic_distance(ULTRASONIC_BACK);
+			break;
+		default:
+			json_respond_error("unrecognized sensor id");
+			return;
+			break;
+		}
+
+		json_start_response(true, "");
+		json_add_int("data", data);
+		json_end_response();
+	}
+	else
+	{
+		json_respond_error(argument_error);
+	}
+}
+
+
 static inline void exec_sensors(void)
 {
-//	int us_left;
-//	int us_front;
-//	int us_bottom;
-//	int us_right;
-//	int us_back;
-//	const char *fmt_string = "heading: %d\r\n"
-//							 "us_left: %d\r\n"
-//							 "us_right: %d\r\n"
-//							 "us_front: %d\r\n"
-//							 "us_back: %d\r\n"
-//							 "us_bottom: %d\r\n"
-//							 "accel_x: %d\r\n"
-//							 "accel_y: %d\r\n"
-//							 "accel_z: %d\r\n";
 	uint16_t heading;
 	accelerometer_data_t a;
 	json_kv_t us_array[4];
@@ -522,10 +585,19 @@ static inline void exec_sensors(void)
 	json_add_object("accel", accel_array, sizeof(accel_array)/sizeof(json_kv_t));
 	json_add_object("ultrasonic", us_array, sizeof(us_array)/sizeof(json_kv_t));
 	json_end_response();
+}
 
-//	printf(fmt_string, heading, us_left, us_right, us_front, us_back, us_bottom, a.x, a.y, a.z);
-//	printf("%d\r\n", us_left);
-//	for(ms_timer=0; ms_timer<10;);
+
+static inline void exec_sensors_continuous(void)
+{
+	for(;;)
+	{
+		exec_sensors();
+		if(! buffer_empty(&debug_uart.read_buffer))		// Quit if any key is pressed
+			return;
+
+		for(ms_timer=0; ms_timer<100;);
+	}
 }
 
 
@@ -678,6 +750,12 @@ static inline void exec_straight(void)
 }
 
 
+static inline void exec_turn_abs(void)
+{
+	json_respond_error("TODO: implement support for this in pid.c");
+}
+
+
 static inline void exec_turn_in_place(void)
 {
 	char *pwm_str = NEXT_STRING();
@@ -723,6 +801,22 @@ static inline void exec_turn_in_place(void)
 		update_speed(&MOTOR_RIGHT);
 #endif
 		json_respond_ok(empty_string);
+	}
+	else
+	{
+		json_respond_error(argument_error);
+	}
+}
+
+
+static inline void exec_turn_rel(void)
+{
+	char *heading_str = NEXT_STRING();
+
+	if(heading_str != NULL)
+	{
+		change_setpoint(atoi(heading_str), 0, 0);
+		json_respond_ok("TODO: This probably won't work because distance=0");
 	}
 	else
 	{
@@ -790,6 +884,9 @@ static inline void parse_command(void)
 	case TOKEN_MOTOR_STEP_RESPONSE:
 		exec_motor_step_response();
 		break;
+	case TOKEN_MOVE:
+		exec_move();
+		break;
 	case TOKEN_PWM:
 		exec_pwm();
 		break;
@@ -800,8 +897,16 @@ static inline void parse_command(void)
 		exec_reset();
 		break;
 	case TOKEN_S:
+		exec_sensors();
+		break;
+	case TOKEN_SENSOR:
+		exec_sensor();
+		break;
 	case TOKEN_SENSORS:
 		exec_sensors();
+		break;
+	case TOKEN_SENSORS_CONTINUOUS:
+		exec_sensors_continuous();
 		break;
 	case TOKEN_SERVO:
 		exec_servo();
@@ -821,8 +926,14 @@ static inline void parse_command(void)
 	case TOKEN_STRAIGHT:
 		exec_straight();
 		break;
+	case TOKEN_TURN_ABS:
+		exec_turn_abs();
+		break;
 	case TOKEN_TURN_IN_PLACE:
 		exec_turn_in_place();
+		break;
+	case TOKEN_TURN_REL:
+		exec_turn_rel();
 		break;
 	default:
 		json_respond_error("unrecognized command");
