@@ -517,8 +517,8 @@ static inline void exec_sensors(void)
 
 	json_start_response(true, empty_string);
 	json_add_int("heading", heading);
-	json_add_object("accel", accel_array, sizeof(accel_array));
-	json_add_object("ultrasonic", us_array, sizeof(accel_array));
+	json_add_object("accel", accel_array, sizeof(accel_array)/sizeof(json_kv_t));
+	json_add_object("ultrasonic", us_array, sizeof(us_array)/sizeof(json_kv_t));
 	json_end_response();
 
 //	printf(fmt_string, heading, us_left, us_right, us_front, us_back, us_bottom, a.x, a.y, a.z);
