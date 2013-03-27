@@ -230,27 +230,27 @@ void clear_encoder_count(void)
 #if NUM_MOTORS == 4
 	MOTOR_LEFT_FRONT.encoder_count = 0;
 	MOTOR_LEFT_FRONT.prev_encoder_count = 0;
-	MOTOR_LEFT_FRONT.reg->enc = 0;
+	MOTOR_LEFT_FRONT.reg.enc = 0;
 
 	MOTOR_LEFT_BACK.encoder_count = 0;
 	MOTOR_LEFT_BACK.prev_encoder_count = 0;
-	MOTOR_LEFT_BACK.reg->enc = 0;
+	MOTOR_LEFT_BACK.reg.enc = 0;
 
 	MOTOR_RIGHT_FRONT.encoder_count = 0;
 	MOTOR_RIGHT_FRONT.prev_encoder_count = 0;
-	MOTOR_RIGHT_FRONT.reg->enc = 0;
+	MOTOR_RIGHT_FRONT.reg.enc = 0;
 
 	MOTOR_RIGHT_BACK.encoder_count = 0;
 	MOTOR_RIGHT_BACK.prev_encoder_count = 0;
-	MOTOR_RIGHT_BACK.reg->enc = 0;
+	MOTOR_RIGHT_BACK.reg.enc = 0;
 #elif NUM_MOTORS == 2
 	MOTOR_LEFT.encoder_count = 0;
 	MOTOR_LEFT.prev_encoder_count = 0;
-	MOTOR_LEFT.reg->enc = 0;
+	MOTOR_LEFT.reg.enc = 0;
 
 	MOTOR_RIGHT.encoder_count = 0;
 	MOTOR_RIGHT.prev_encoder_count = 0;
-	MOTOR_RIGHT.reg->enc = 0;
+	MOTOR_RIGHT.reg.enc = 0;
 #endif
 }
 
