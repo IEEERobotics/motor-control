@@ -309,11 +309,11 @@ static inline void exec_move(void)
 	if(speed_str != NULL && distance_str != NULL)
 	{
 		change_setpoint(0, atoi(speed_str), atoi(distance_str), true, true);
-		json_respond_ok("");
+//		json_respond_ok("");
 	}
 	else
 	{
-		json_respond_error(argument_error);
+//		json_respond_error(argument_error);
 	}
 }
 
@@ -699,7 +699,17 @@ static inline void exec_straight(void)
 
 static inline void exec_turn_abs(void)
 {
-	json_respond_error("TODO: implement support for this in pid.c");
+	char *heading_str = NEXT_STRING();
+
+	if(heading_str != NULL)
+	{
+		change_setpoint(atoi(heading_str), 0, 0, false, true);
+//		json_respond_ok("TODO: This probably won't work because distance=0");
+	}
+	else
+	{
+//		json_respond_error(argument_error);
+	}
 }
 
 
@@ -763,11 +773,11 @@ static inline void exec_turn_rel(void)
 	if(heading_str != NULL)
 	{
 		change_setpoint(atoi(heading_str), 0, 0, true, true);
-		json_respond_ok("TODO: This probably won't work because distance=0");
+//		json_respond_ok("TODO: This probably won't work because distance=0");
 	}
 	else
 	{
-		json_respond_error(argument_error);
+//		json_respond_error(argument_error);
 	}
 }
 
