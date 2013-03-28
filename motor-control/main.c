@@ -78,6 +78,7 @@ int main()
 	init_debug();						// Use ports H and J for debugging
 	init_clock();						// Set up the system clock
 	init_motors();						// Set up everything to do with motor control
+	init_heading_controller();
 	init_ms_timer();					// Initialize timer interrupt
 	init_ultrasonic();
 	init_uarts();						// Set up the UART
