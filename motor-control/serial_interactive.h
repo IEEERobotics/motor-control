@@ -45,10 +45,6 @@ typedef enum token {
 	TOKEN_TURN_REL,
 } token_t;
 
-typedef struct json_kv {
-	const char *key;
-	int value;
-} json_kv_t;
 
 typedef enum sensor_id {
 	SENSOR_COMPASS = 0,

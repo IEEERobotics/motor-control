@@ -18,6 +18,7 @@
 #include "accelerometer.h"
 #include "pid.h"
 #include "uart.h"
+#include "json.h"
 #include "serial_interactive.h"
 
 #define NEXT_TOKEN()	(find_token(strtok(NULL, delimiters)))
@@ -96,9 +97,6 @@ const char *lf = "\n";
 const char *crlf = "\r\n";
 const char *argument_error = "too few arguments";
 const char *empty_string = "";
-const char *json_true = "true";
-const char *json_false = "false";
-const char *json_null = "null";
 
 bool interactive_mode = false;
 
@@ -178,57 +176,6 @@ static inline motor_t *get_motor(token_t token)
 	}
 
 	return NULL;
-}
-
-
-static inline void json_start_response(bool result, const char *msg)
-{
-	const char *result_str = result ? json_true : json_false;
-	printf("{\"result\":%s,\"msg\":\"%s\"", result_str, msg);
-}
-
-
-static inline void json_add_int(const char *key, int val)
-{
-	printf(",\"%s\":%d", key, val);
-}
-
-
-static inline void json_add_object(const char *key, json_kv_t *kv_pairs, uint8_t len)
-{
-	uint8_t i;
-
-
-	printf(",\"%s\":{", key);
-	for(i=0; i<len; i++)
-	{
-		if(i > 0)
-			printf(",");
-		printf("\"%s\":%d", kv_pairs[i].key, kv_pairs[i].value);
-	}
-	printf("}");
-}
-
-
-static inline void json_end_response(void)
-{
-	const char *newline = interactive_mode ? crlf : lf;
-
-	printf("}%s", newline);
-}
-
-
-static inline void json_respond_ok(const char *msg)
-{
-	json_start_response(true, msg);
-	json_end_response();
-}
-
-
-static inline void json_respond_error(const char *msg)
-{
-	json_start_response(false, msg);
-	json_end_response();
 }
 
 
