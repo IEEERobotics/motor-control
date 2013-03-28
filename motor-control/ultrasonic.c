@@ -55,6 +55,7 @@ static inline void ping_ultrasonic(void)
 	volatile ultrasonic_t *u = &CURRENT_SENSOR;
 
 	measurement_in_progress = true;
+	ULTRASONIC_TIMER.CCABUF = 0;
 	ULTRASONIC_CHMUX = u->echo_chmux;			// Connect event channel 4 to echo pin
 	u->port->OUTCLR = u->trig_bm;				// Falling edge triggers sensor measurement
 }
@@ -151,7 +152,7 @@ int get_ultrasonic_distance(ultrasonic_id_t index)
 ISR(ULTRASONIC_TIMER_VECT)
 {
 	DEBUG_ENTER_ISR(DEBUG_ISR_US_TIMER);
-	set_result(ULTRASONIC_TIMER.CCA);
+	set_result(ULTRASONIC_TIMER.CCABUF);
 	DEBUG_EXIT_ISR(DEBUG_ISR_US_TIMER);
 }
 
