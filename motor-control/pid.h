@@ -29,8 +29,7 @@
 #define PID_HEADING_KD			0
 #define PID_HEADING_ISUM_MIN	-10000000
 #define PID_HEADING_ISUM_MAX	10000000
-#define PID_HEADING_TOLERANCE	200		// Robot will stop and turn in place to correct
-										// heading if error is greater than this
+#define PID_HEADING_TOLERANCE	200
 #define PID_NUM_SAMPLES 		128		// Number of samples to save in memory after changing the setpoint
 
 

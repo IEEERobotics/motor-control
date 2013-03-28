@@ -16,6 +16,7 @@
 #include "motor.h"
 #include "compass.h"
 #include "timer.h"
+#include "json.h"
 #include "pid.h"
 
 #define LIMIT(x, min, max)	((x) < (min)) ? (min) : (((x) > (max)) ? (max) : (x))
@@ -26,6 +27,7 @@ controller_t heading_pid;
 static bool pid_enabled = false;
 static unsigned long int time = 0;
 static unsigned long distance = 0;
+static bool json_response_sent = false;
 
 static inline void reset_controller(controller_t *c)
 {
@@ -82,7 +84,6 @@ static inline int get_motor_pv(motor_t *motor)
 
 	// units are ticks/min
 //	unsigned long int pv = (motor->encoder_count - motor->prev_encoder_count) * (60000u/MS_TIMER_PER);
-//	motor->prev_encoder_count = motor->encoder_count;
 //	return pv;
 #else
 	return motor->encoder_count;
@@ -146,6 +147,20 @@ static inline int get_motor_setpoint(motor_t *m)
 }
 
 
+static inline bool motor_controllers_enabled(void)
+{
+#if NUM_MOTORS == 2
+	return MOTOR_LEFT.controller.enabled
+			&& MOTOR_RIGHT.controller.enabled;
+#elif NUM_MOTORS == 4
+	return MOTOR_LEFT_FRONT.controller.enabled
+			&& MOTOR_LEFT_BACK.controller.enabled
+			&& MOTOR_RIGHT_FRONT.controller.enabled
+			&& MOTOR_RIGHT_BACK.controller.enabled;
+#endif
+}
+
+
 static inline void enable_motor_controllers(bool enable)
 {
 #if NUM_MOTORS == 2
@@ -163,6 +178,37 @@ static inline void enable_motor_controllers(bool enable)
 static inline void enable_heading_controller(bool enable)
 {
 	heading_pid.enabled = enable;
+}
+
+
+static inline bool is_stopped(void)
+{
+#if NUM_MOTORS == 2
+	return MOTOR_LEFT.encoder_count == MOTOR_LEFT.prev_encoder_count
+			&& MOTOR_RIGHT.encoder_count == MOTOR_RIGHT.prev_encoder_count;
+#elif NUM_MOTORS == 4
+	return MOTOR_LEFT_FRONT.encoder_count == MOTOR_LEFT_FRONT.prev_encoder_count
+			&& MOTOR_LEFT_BACK.encoder_count == MOTOR_LEFT_BACK.prev_encoder_count
+			&& MOTOR_RIGHT_FRONT.encoder_count == MOTOR_RIGHT_FRONT.prev_encoder_count
+			&& MOTOR_RIGHT_BACK.encoder_count == MOTOR_RIGHT_BACK.prev_encoder_count;
+#endif
+}
+
+
+static inline void print_json_response(int heading, int heading_error)
+{
+	int distance;
+
+	ATOMIC_BLOCK(ATOMIC_FORCEON)
+	{
+		distance = (MOTOR_LEFT.encoder_count + MOTOR_RIGHT.encoder_count) / 2;
+	}
+
+	json_start_response(true, "");
+	json_add_int("distance", distance);
+	json_add_int("absHeading", heading);
+	json_add_int("headingErr", heading_error);	// Not in serial comm spec!
+	json_end_response();
 }
 
 
@@ -193,10 +239,35 @@ void compute_next_pid_iteration(void)
 	compute_motor_pid(&MOTOR_LEFT_BACK, left_setpoint);
 	compute_motor_pid(&MOTOR_RIGHT_FRONT, right_setpoint);
 	compute_motor_pid(&MOTOR_RIGHT_BACK, right_setpoint);
+	ATOMIC_BLOCK(ATOMIC_FORCEON)
+	{
+		MOTOR_LEFT_FRONT.prev_encoder_count = MOTOR_LEFT_FRONT.encoder_count;
+		MOTOR_LEFT_BACK.prev_encoder_count = MOTOR_LEFT_BACK.encoder_count;
+		MOTOR_RIGHT_FRONT.prev_encoder_count = MOTOR_RIGHT_FRONT.encoder_count;
+		MOTOR_RIGHT_BACK.prev_encoder_count = MOTOR_RIGHT_BACK.encoder_count;
+	}
 #elif NUM_MOTORS == 2
 	compute_motor_pid(&MOTOR_LEFT, left_setpoint);
 	compute_motor_pid(&MOTOR_RIGHT, right_setpoint);
+	ATOMIC_BLOCK(ATOMIC_FORCEON)
+	{
+		MOTOR_LEFT.prev_encoder_count = MOTOR_LEFT.encoder_count;
+		MOTOR_RIGHT.prev_encoder_count = MOTOR_RIGHT.encoder_count;
+	}
 #endif
+
+	if(! json_response_sent)
+	{
+		/* No distance control and heading within tolerance, OR robot is stopped and all motor
+		 * controllers disabled (motor controllers are disabled as they reach the target distance)
+		 */
+		if((distance == 0 && abs(heading_error) < PID_HEADING_TOLERANCE)
+				|| (! motor_controllers_enabled() && is_stopped()))
+		{
+			print_json_response(current_heading, heading_error);
+			json_response_sent = true;
+		}
+	}
 
 	time++;
 }
@@ -276,6 +347,8 @@ void change_setpoint(int heading_sp,
 
 	enable_motor_controllers(true);
 	enable_heading_controller(true);
+
+	json_response_sent = false;
 
 	pid_enabled = true;
 }
