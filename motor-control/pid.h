@@ -76,6 +76,9 @@ void change_motor_constants(int p, int i, int d);
 void pid_enable(void);
 void pid_disable(void);
 bool pid_is_enabled(void);
+void change_heading(int heading_sp, bool is_relative);
+void change_speed(int new_speed);
+void change_distance(int new_distance);
 
 extern controller_t heading_pid;
 

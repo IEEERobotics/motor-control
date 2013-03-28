@@ -354,6 +354,43 @@ void change_setpoint(int heading_sp,
 }
 
 
+void change_heading(int heading_sp, bool is_relative)
+{
+	uint16_t current_heading;
+	int new_heading_setpoint;
+
+	if(is_relative)
+	{
+		while(! compass_read(&current_heading));
+		new_heading_setpoint = normalize_heading(heading_sp + current_heading);
+	}
+	else
+	{
+		new_heading_setpoint = heading_sp;
+	}
+
+	pid_enabled = false;
+	heading_setpoint = new_heading_setpoint;
+	pid_enabled = true;
+}
+
+
+void change_speed(int new_speed)
+{
+	pid_enabled = false;
+	motor_setpoint = new_speed;
+	pid_enabled = true;
+}
+
+
+void change_distance(int new_distance)
+{
+	pid_enabled = false;
+	distance = new_distance;
+	pid_enabled = true;
+}
+
+
 void init_heading_controller(void)
 {
 	init_controller(&heading_pid,
