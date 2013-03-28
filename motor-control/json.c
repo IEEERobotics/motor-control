@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include "pid.h"
 #include "json.h"
 
 
@@ -23,21 +24,34 @@ extern const char *crlf;
 void json_start_response(bool result, const char *msg)
 {
 	const char *result_str = result ? json_true : json_false;
+
+	/* Why? to keep a JSON response from being printed in the PID controller interrupt while
+	 * another one is being printed in serial_interactive.c
+	 */
+	bool pid_enabled = pid_is_enabled();
+
+	if(pid_enabled) pid_disable();
 	printf("{\"result\":%s,\"msg\":\"%s\"", result_str, msg);
+	if(pid_enabled) pid_enable();
 }
 
 
 void json_add_int(const char *key, int val)
 {
+	bool pid_enabled = pid_is_enabled();
+
+	if(pid_enabled) pid_disable();
 	printf(",\"%s\":%d", key, val);
+	if(pid_enabled) pid_enable();
 }
 
 
 void json_add_object(const char *key, json_kv_t *kv_pairs, uint8_t len)
 {
 	uint8_t i;
+	bool pid_enabled = pid_is_enabled();
 
-
+	if(pid_enabled) pid_disable();
 	printf(",\"%s\":{", key);
 	for(i=0; i<len; i++)
 	{
@@ -46,14 +60,18 @@ void json_add_object(const char *key, json_kv_t *kv_pairs, uint8_t len)
 		printf("\"%s\":%d", kv_pairs[i].key, kv_pairs[i].value);
 	}
 	printf("}");
+	if(pid_enabled) pid_enable();
 }
 
 
 void json_end_response(void)
 {
 	const char *newline = interactive_mode ? crlf : lf;
+	bool pid_enabled = pid_is_enabled();
 
+	if(pid_enabled) pid_disable();
 	printf("}%s", newline);
+	if(pid_enabled) pid_enable();
 }
 
 
