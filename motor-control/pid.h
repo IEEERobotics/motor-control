@@ -13,7 +13,7 @@
 #define PID_H_
 
 #include <stdbool.h>
-#include "motor.h"
+//#include "motor.h"
 
 //#define PID_IGNORE_HEADING
 //#define PID_CONTROL_SPEED
