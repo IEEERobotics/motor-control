@@ -56,6 +56,7 @@ typedef struct controller {
 	int setpoint;		//!< The value at which the controller will attempt to converge
 	volatile sample_t samples[PID_NUM_SAMPLES];
 	volatile unsigned short int sample_counter;
+	bool enabled;
 } controller_t;
 
 void compute_next_pid_iteration(void);
