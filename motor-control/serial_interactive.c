@@ -99,6 +99,7 @@ const char *argument_error = "too few arguments";
 const char *empty_string = "";
 
 bool interactive_mode = false;
+int id_short, id_long;
 
 
 /**
@@ -182,14 +183,14 @@ static inline motor_t *get_motor(token_t token)
 static inline void exec_compass_start_calibration()
 {
 	while(! compass_enter_calibration_mode());
-	json_respond_ok(empty_string);
+	json_respond_ok(empty_string, id_short);
 }
 
 
 static inline void exec_compass_stop_calibration()
 {
 	while(! compass_exit_calibration_mode());
-	json_respond_ok(empty_string);
+	json_respond_ok(empty_string, id_short);
 }
 
 
@@ -199,7 +200,7 @@ static inline void exec_heading(void)
 
 	while(! compass_read(&heading));
 
-	json_start_response(true, "deprecated, use 'sensors' instead");
+	json_start_response(true, "deprecated, use 'sensors' instead", id_short);
 	json_add_int("data", heading);
 	json_end_response();
 }
@@ -214,11 +215,11 @@ static inline void exec_heading_pid(void)
 	if(p != NULL && i != NULL && d != NULL)
 	{
 		change_heading_constants(atoi(p), atoi(i), atoi(d));
-		json_respond_ok(empty_string);
+		json_respond_ok(empty_string, id_short);
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -235,11 +236,11 @@ static inline void exec_interactive(void)
 
 	if(interactive_mode)
 	{
-		json_respond_ok("interactive on");
+		json_respond_ok("interactive on", id_short);
 	}
 	else
 	{
-		json_respond_ok("interactive off");
+		json_respond_ok("interactive off", id_short);
 	}
 }
 
@@ -253,11 +254,11 @@ static inline void exec_motor_pid(void)
 	if(p != NULL && i != NULL && d != NULL)
 	{
 		change_motor_constants(atoi(p), atoi(i), atoi(d));
-		json_respond_ok(empty_string);
+		json_respond_ok(empty_string, id_short);
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -296,7 +297,7 @@ static inline void exec_motor_step_response(void)
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -349,7 +350,7 @@ static inline void exec_pwm(void)
 
 		update_speed(motor);
 		clear_encoder_count();
-		json_respond_ok(empty_string);
+		json_respond_ok(empty_string, id_short);
 
 //		for(i=0; i<256; i++)
 //		{
@@ -359,7 +360,7 @@ static inline void exec_pwm(void)
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -431,11 +432,11 @@ static inline void exec_pwm_drive(void)
 		update_speed(&MOTOR_LEFT);
 		update_speed(&MOTOR_RIGHT);
 #endif
-		json_respond_ok(empty_string);
+		json_respond_ok(empty_string, id_short);
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -485,18 +486,18 @@ static inline void exec_sensor(void)
 			data = get_ultrasonic_distance(ULTRASONIC_BACK);
 			break;
 		default:
-			json_respond_error("unrecognized sensor id");
+			json_respond_error("unrecognized sensor id", id_short);
 			return;
 			break;
 		}
 
-		json_start_response(true, "");
+		json_start_response(true, "", id_short);
 		json_add_int("data", data);
 		json_end_response();
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -527,7 +528,7 @@ static inline void exec_sensors(void)
 	while(! compass_read(&heading));
 	while(! accelerometer_get_data(&a));
 
-	json_start_response(true, empty_string);
+	json_start_response(true, empty_string, id_short);
 	json_add_int("heading", heading);
 	json_add_object("accel", accel_array, sizeof(accel_array)/sizeof(json_kv_t));
 	json_add_object("ultrasonic", us_array, sizeof(us_array)/sizeof(json_kv_t));
@@ -557,11 +558,11 @@ static inline void exec_servo(void)
 	if(channel != NULL && ramp != NULL && angle != NULL)
 	{
 		parallax_set_angle(atoi(channel), atoi(angle), atoi(ramp));
-		json_respond_ok(empty_string);
+		json_respond_ok(empty_string, id_short);
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -575,11 +576,11 @@ static inline void exec_set(void)
 	if(heading_str != NULL && speed_str != NULL && distance_str != NULL)
 	{
 		change_setpoint(atoi(heading_str), atoi(speed_str), atoi(distance_str), true, true);
-		json_respond_ok("TODO: block here until movement is complete");
+//		json_respond_ok("TODO: block here until movement is complete");
 	}
 	else
 	{
-		json_respond_error(argument_error);
+//		json_respond_error(argument_error);
 	}
 }
 
@@ -642,7 +643,7 @@ static inline void exec_stop(void)
 	update_speed(&motor_c);
 	update_speed(&motor_d);
 
-	json_respond_ok(empty_string);
+	json_respond_ok(empty_string, id_short);
 }
 
 
@@ -688,11 +689,11 @@ static inline void exec_straight(void)
 		update_speed(&MOTOR_LEFT);
 		update_speed(&MOTOR_RIGHT);
 #endif
-		json_respond_ok(empty_string);
+		json_respond_ok(empty_string, id_short);
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -757,11 +758,11 @@ static inline void exec_turn_in_place(void)
 		update_speed(&MOTOR_LEFT);
 		update_speed(&MOTOR_RIGHT);
 #endif
-		json_respond_ok(empty_string);
+		json_respond_ok(empty_string, id_short);
 	}
 	else
 	{
-		json_respond_error(argument_error);
+		json_respond_error(argument_error, id_short);
 	}
 }
 
@@ -782,6 +783,22 @@ static inline void exec_turn_rel(void)
 }
 
 
+static inline bool is_long_command(token_t cmd)
+{
+	switch(cmd)
+	{
+	case TOKEN_MOVE:
+	case TOKEN_SET:
+	case TOKEN_TURN_ABS:
+	case TOKEN_TURN_REL:
+		return true;
+		break;
+	default:
+		return false;
+	}
+}
+
+
 /**
  * Read a command from the serial terminal and parse it.
  */
@@ -790,6 +807,8 @@ static inline void parse_command(void)
 	char input[32];
 	int i = 0;
 	char c;
+	int id;
+	token_t command;
 
 	while((c = getchar()) != '\r')
 	{
@@ -815,7 +834,23 @@ static inline void parse_command(void)
 	input[i] = '\0';
 	tolower_str(input);
 
-	switch(find_token(strtok(input, delimiters)))
+	if(interactive_mode)
+	{
+		id_short = -1;
+		id_long = -1;
+		command = find_token(strtok(input, delimiters));
+	}
+	else
+	{
+		id = atoi(strtok(input, delimiters));
+		command = NEXT_TOKEN();
+		if(is_long_command(command))
+			id_long = id;
+		else
+			id_short = id;
+	}
+
+	switch(command)
 	{
 	case TOKEN_COMPASS_START_CALIBRATION:
 		exec_compass_start_calibration();
@@ -893,7 +928,7 @@ static inline void parse_command(void)
 		exec_turn_rel();
 		break;
 	default:
-		json_respond_error("unrecognized command");
+		json_respond_error("unrecognized command", id);
 		break;
 	}
 }

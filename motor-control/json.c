@@ -21,7 +21,7 @@ extern const char *lf;
 extern const char *crlf;
 
 
-void json_start_response(bool result, const char *msg)
+void json_start_response(bool result, const char *msg, int id)
 {
 	const char *result_str = result ? json_true : json_false;
 
@@ -31,7 +31,7 @@ void json_start_response(bool result, const char *msg)
 	bool pid_enabled = pid_is_enabled();
 
 	if(pid_enabled) pid_disable();
-	printf("{\"result\":%s,\"msg\":\"%s\"", result_str, msg);
+	printf("{\"result\":%s,\"msg\":\"%s\",\"id\":%d", result_str, msg, id);
 	if(pid_enabled) pid_enable();
 }
 
@@ -75,15 +75,15 @@ void json_end_response(void)
 }
 
 
-void json_respond_ok(const char *msg)
+void json_respond_ok(const char *msg, int id)
 {
-	json_start_response(true, msg);
+	json_start_response(true, msg, id);
 	json_end_response();
 }
 
 
-void json_respond_error(const char *msg)
+void json_respond_error(const char *msg, int id)
 {
-	json_start_response(false, msg);
+	json_start_response(false, msg, id);
 	json_end_response();
 }

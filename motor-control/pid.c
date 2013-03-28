@@ -29,6 +29,8 @@ static unsigned long int time = 0;
 static unsigned long distance = 0;
 static bool json_response_sent = false;
 
+extern int id_long;		// in serial_interactive.c
+
 static inline void reset_controller(controller_t *c)
 {
 	c->i_sum = 0;
@@ -204,7 +206,7 @@ static inline void print_json_response(int heading, int heading_error)
 		distance = (MOTOR_LEFT.encoder_count + MOTOR_RIGHT.encoder_count) / 2;
 	}
 
-	json_start_response(true, "");
+	json_start_response(true, "", id_long);
 	json_add_int("distance", distance);
 	json_add_int("absHeading", heading);
 	json_add_int("headingErr", heading_error);	// Not in serial comm spec!
