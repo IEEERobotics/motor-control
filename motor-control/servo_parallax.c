@@ -35,8 +35,10 @@ static inline void servo_putchar_n(uint8_t *buffer, uint8_t num_bytes)
  */
 void init_servo_parallax()
 {
-	parallax_set_angle(SERVO_LEFT_ARM_CHANNEL, SERVO_LEFT_ARM_UP, SERVO_RAMP);
-	parallax_set_angle(SERVO_RIGHT_ARM_CHANNEL, SERVO_RIGHT_ARM_UP, SERVO_RAMP);
+	parallax_set_angle(SERVO_LEFT_ARM_CHANNEL, SERVO_LEFT_ARM_UP, SERVO_ARM_RAMP);
+	parallax_set_angle(SERVO_RIGHT_ARM_CHANNEL, SERVO_RIGHT_ARM_UP, SERVO_ARM_RAMP);
+	parallax_set_angle(SERVO_LEFT_GRIP_CHANNEL, SERVO_LEFT_GRIP_CLOSE, SERVO_GRIP_RAMP);
+	parallax_set_angle(SERVO_RIGHT_GRIP_CHANNEL, SERVO_RIGHT_GRIP_CLOSE, SERVO_GRIP_RAMP);
 }
 
 
