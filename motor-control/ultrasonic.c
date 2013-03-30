@@ -55,7 +55,7 @@ static inline void ping_ultrasonic(void)
 	volatile ultrasonic_t *u = &CURRENT_SENSOR;
 
 	measurement_in_progress = true;
-	ULTRASONIC_TIMER.CCABUF = 0;
+	ULTRASONIC_TIMER.CCA = 0;
 	ULTRASONIC_CHMUX = u->echo_chmux;			// Connect event channel 4 to echo pin
 	u->port->OUTCLR = u->trig_bm;				// Falling edge triggers sensor measurement
 }
@@ -68,7 +68,7 @@ static inline void set_result(int result)
 {
 	volatile ultrasonic_t *u = &CURRENT_SENSOR;
 
-	u->distance = result;
+	u->distance = (result == 1) ? -1 : result;	// This is a kludge to fix a problem I don't fully understand.
 	u->port->OUTSET = usensors[current_sensor].trig_bm;
 	current_sensor = NEXT_SENSOR_INDEX();
 	measurement_in_progress = false;
@@ -127,7 +127,7 @@ void init_ultrasonic()
  * Returns the last measured distance of an ultrasonic sensor.
  *
  * @param u Pointer to ultrasonic_t struct
- * @return Distance (units still undecided), or -1 if no valid distance has been measured.
+ * @return Distance (return value * .34 mm), or -1 if no valid distance has been measured.
  */
 int get_ultrasonic_distance(ultrasonic_id_t index)
 {
@@ -152,7 +152,7 @@ int get_ultrasonic_distance(ultrasonic_id_t index)
 ISR(ULTRASONIC_TIMER_VECT)
 {
 	DEBUG_ENTER_ISR(DEBUG_ISR_US_TIMER);
-	set_result(ULTRASONIC_TIMER.CCABUF);
+	set_result(ULTRASONIC_TIMER.CCA);
 	DEBUG_EXIT_ISR(DEBUG_ISR_US_TIMER);
 }
 
