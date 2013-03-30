@@ -28,6 +28,9 @@ static bool pid_enabled = false;
 static unsigned long int time = 0;
 static unsigned long distance = 0;
 static bool json_response_sent = false;
+static int heading_deadband = PID_HEADING_TOLERANCE;
+static int delta_speed = 10;
+static int current_ramp_speed = 0;
 
 extern int id_long;		// in serial_interactive.c
 
@@ -146,6 +149,28 @@ static inline int normalize_heading(int heading)
 static inline int get_motor_setpoint(motor_t *m)
 {
 	return motor_setpoint;
+
+	if(delta_speed > 0)
+	{
+		if(time == 0)
+		{
+			current_ramp_speed = 0;
+		}
+		else if(current_ramp_speed < motor_setpoint)
+		{
+			current_ramp_speed += delta_speed;
+		}
+		else
+		{
+			current_ramp_speed = motor_setpoint;
+		}
+	}
+	else
+	{
+		current_ramp_speed = motor_setpoint;
+	}
+
+	return current_ramp_speed;
 }
 
 
@@ -231,9 +256,13 @@ void compute_next_pid_iteration(void)
 #ifndef PID_IGNORE_HEADING
 	while(! compass_read(&current_heading));	// Get current heading, run again if error
 	heading_error = normalize_heading(heading_setpoint - current_heading);
-	heading_mv = compute_pid(&heading_pid, heading_error) / 10;
-	right_setpoint -= heading_mv;
-	left_setpoint += heading_mv;
+
+	if(abs(heading_error) > heading_deadband)
+	{
+		heading_mv = compute_pid(&heading_pid, heading_error) / 1;
+		right_setpoint -= heading_mv;
+		left_setpoint += heading_mv;
+	}
 #endif
 
 #if NUM_MOTORS == 4
@@ -271,6 +300,7 @@ void compute_next_pid_iteration(void)
 		}
 	}
 
+//	printf("%d\r\n", heading_error);
 	time++;
 }
 
@@ -463,4 +493,24 @@ void pid_disable(void)
 bool pid_is_enabled(void)
 {
 	return pid_enabled;
+}
+
+
+void set_heading_deadband(int new_deadband)
+{
+	bool enabled = pid_enabled;
+
+	if(enabled) pid_enabled = false;
+	heading_deadband = new_deadband;
+	if(enabled) pid_enabled = true;
+}
+
+
+void set_ramp(int new_ramp)
+{
+	bool enabled = pid_enabled;
+
+	if(enabled) pid_enabled = false;
+	delta_speed = new_ramp;
+	if(enabled) pid_enabled = true;
 }

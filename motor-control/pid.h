@@ -29,7 +29,7 @@
 #define PID_HEADING_KD			0
 #define PID_HEADING_ISUM_MIN	-10000000
 #define PID_HEADING_ISUM_MAX	10000000
-#define PID_HEADING_TOLERANCE	200
+#define PID_HEADING_TOLERANCE	50
 #define PID_NUM_SAMPLES 		128		// Number of samples to save in memory after changing the setpoint
 
 
@@ -79,6 +79,8 @@ bool pid_is_enabled(void);
 void change_heading(int heading_sp, bool is_relative);
 void change_speed(int new_speed);
 void change_distance(int new_distance);
+void set_heading_deadband(int new_deadband);
+void set_ramp(int new_ramp);
 
 extern controller_t heading_pid;
 
