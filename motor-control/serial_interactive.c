@@ -43,19 +43,41 @@ const char *delimiters = " \r\n";
 const char *tokens[] = { "a",
 					   	 "b",
 					   	 "c",
+					   	 "compass_dump_eeprom",
+					   	 "compass_flat",
+					   	 "compass_ramp",
+					   	 "compass_read_eeprom",
+					   	 "compass_read_ram",
 					   	 "compass_start_calibration",
 					   	 "compass_stop_calibration",
+					   	 "compass_write_eeprom",
+					   	 "compass_write_ram",
 					   	 "d",
 					   	 "heading",
+					   	 "heading_accuracy",
 					   	 "heading_pid",
 					   	 "help",
 					   	 "interactive",
+					   	 "left_close",
+					   	 "left_down",
+					   	 "left_drop",
+					   	 "left_grab",
+					   	 "left_open",
+					   	 "left_up",
 					   	 "motor_pid",
 					   	 "motor_step_response",
 					   	 "move",
 					   	 "pwm",
 					   	 "pwm_drive",
+					   	 "ramp",
 					   	 "reset",
+					   	 "reset_servos",
+					   	 "right_close",
+					   	 "right_down",
+					   	 "right_drop",
+					   	 "right_grab",
+					   	 "right_open",
+					   	 "right_up",
 					   	 "s",
 					   	 "sensor",
 					   	 "sensors",
@@ -180,6 +202,95 @@ static inline motor_t *get_motor(token_t token)
 }
 
 
+static inline void exec_compass_dump_eeprom()
+{
+	int i;
+	uint8_t eeprom[9];
+	uint8_t opmode;
+	uint8_t outmode;
+
+	for(i=0; i<9; i++)
+	{
+		while(! compass_read_eeprom(i, &eeprom[i]));
+	}
+
+	compass_read_ram(COMPASS_RAM_OPMODE, &opmode);
+	compass_read_ram(COMPASS_RAM_OUTMODE, &outmode);
+
+	json_start_response(true, empty_string, id_short);
+	json_add_int("COMPASS_EEPROM_I2C_ADDRESS", eeprom[COMPASS_EEPROM_I2C_ADDRESS]);
+	json_add_int("COMPASS_EEPROM_XOFFMSB", eeprom[COMPASS_EEPROM_XOFFMSB]);
+	json_add_int("COMPASS_EEPROM_XOFFLSB", eeprom[COMPASS_EEPROM_XOFFLSB]);
+	json_add_int("COMPASS_EEPROM_YOFFMSB", eeprom[COMPASS_EEPROM_YOFFMSB]);
+	json_add_int("COMPASS_EEPROM_YOFFLSB", eeprom[COMPASS_EEPROM_YOFFLSB]);
+	json_add_int("COMPASS_EEPROM_TIME_DELAY", eeprom[COMPASS_EEPROM_TIME_DELAY]);
+	json_add_int("COMPASS_EEPROM_NUM_MEASUREMENTS", eeprom[COMPASS_EEPROM_NUM_MEASUREMENTS]);
+	json_add_int("COMPASS_EEPROM_SOFTWARE_VER", eeprom[COMPASS_EEPROM_SOFTWARE_VER]);
+	json_add_int("COMPASS_EEPROM_OPMODE", eeprom[COMPASS_EEPROM_OPMODE]);
+	json_add_int("COMPASS_RAM_OPMODE", opmode);
+	json_add_int("COMPASS_RAM_OUTMODE", outmode);
+	json_end_response();
+}
+
+
+static inline void exec_compass_flat()
+{
+	compass_set(COMPASS_FLAT);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_compass_ramp()
+{
+	compass_set(COMPASS_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_compass_read_eeprom()
+{
+	char *address_str = NEXT_STRING();
+	uint8_t address;
+	uint8_t data;
+
+	if(address_str != NULL)
+	{
+		address = atoi(address_str);
+		while(! compass_read_eeprom(address, &data));
+		json_start_response(true, empty_string, id_short);
+		json_add_int("address", address);
+		json_add_int("data", data);
+		json_end_response();
+	}
+	else
+	{
+		json_respond_error(argument_error, id_short);
+	}
+}
+
+
+static inline void exec_compass_read_ram()
+{
+	char *address_str = NEXT_STRING();
+	uint8_t address;
+	uint8_t data;
+
+	if(address_str != NULL)
+	{
+		address = atoi(address_str);
+		while(! compass_read_ram(address, &data));
+		json_start_response(true, empty_string, id_short);
+		json_add_int("address", address);
+		json_add_int("data", data);
+		json_end_response();
+	}
+	else
+	{
+		json_respond_error(argument_error, id_short);
+	}
+}
+
+
 static inline void exec_compass_start_calibration()
 {
 	while(! compass_enter_calibration_mode());
@@ -194,6 +305,54 @@ static inline void exec_compass_stop_calibration()
 }
 
 
+static inline void exec_compass_write_eeprom()
+{
+	char *address_str = NEXT_STRING();
+	char *data_str = NEXT_STRING();
+	uint8_t address;
+	uint8_t data;
+
+	if(address_str != NULL && data_str != NULL)
+	{
+		address = atoi(address_str);
+		data = atoi(data_str);
+		while(! compass_write_eeprom(address, data));
+		json_start_response(true, empty_string, id_short);
+		json_add_int("address", address);
+		json_add_int("data", data);
+		json_end_response();
+	}
+	else
+	{
+		json_respond_error(argument_error, id_short);
+	}
+}
+
+
+static inline void exec_compass_write_ram()
+{
+	char *address_str = NEXT_STRING();
+	char *data_str = NEXT_STRING();
+	uint8_t address;
+	uint8_t data;
+
+	if(address_str != NULL && data_str != NULL)
+	{
+		address = atoi(address_str);
+		data = atoi(data_str);
+		while(! compass_write_ram(address, data));
+		json_start_response(true, empty_string, id_short);
+		json_add_int("address", address);
+		json_add_int("data", data);
+		json_end_response();
+	}
+	else
+	{
+		json_respond_error(argument_error, id_short);
+	}
+}
+
+
 static inline void exec_heading(void)
 {
 	uint16_t heading;
@@ -203,6 +362,22 @@ static inline void exec_heading(void)
 	json_start_response(true, "deprecated, use 'sensors' instead", id_short);
 	json_add_int("data", heading);
 	json_end_response();
+}
+
+
+static inline void exec_heading_accuracy(void)
+{
+	char *deadband = NEXT_STRING();
+
+	if(deadband != NULL)
+	{
+		set_heading_deadband(atoi(deadband));
+		json_respond_ok(empty_string, id_short);
+	}
+	else
+	{
+		json_respond_error(argument_error, id_short);
+	}
 }
 
 
@@ -227,6 +402,51 @@ static inline void exec_heading_pid(void)
 static inline void exec_help(void)
 {
 	puts(help);
+}
+
+
+static inline void exec_left_close(void)
+{
+	parallax_set_angle(SERVO_LEFT_GRIP_CHANNEL, SERVO_LEFT_GRIP_CLOSE, SERVO_GRIP_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_left_down(void)
+{
+	parallax_set_angle(SERVO_LEFT_ARM_CHANNEL, SERVO_LEFT_ARM_DOWN, SERVO_ARM_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_left_drop(void)
+{
+	parallax_set_angle(SERVO_LEFT_ARM_CHANNEL, SERVO_LEFT_ARM_DOWN, SERVO_ARM_RAMP);
+	parallax_set_angle(SERVO_LEFT_GRIP_CHANNEL, SERVO_LEFT_GRIP_OPEN, SERVO_GRIP_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_left_grab(void)
+{
+	parallax_set_angle(SERVO_LEFT_GRIP_CHANNEL, SERVO_LEFT_GRIP_CLOSE, SERVO_GRIP_RAMP);
+	for(ms_timer=0; ms_timer<SERVO_CLOSE_TIME;);	// wait for arm to close
+	parallax_set_angle(SERVO_LEFT_ARM_CHANNEL, SERVO_LEFT_ARM_UP, SERVO_ARM_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_left_open(void)
+{
+	parallax_set_angle(SERVO_LEFT_GRIP_CHANNEL, SERVO_LEFT_GRIP_OPEN, SERVO_GRIP_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_left_up(void)
+{
+	parallax_set_angle(SERVO_LEFT_ARM_CHANNEL, SERVO_LEFT_ARM_UP, SERVO_ARM_RAMP);
+	json_respond_ok(empty_string, id_short);
 }
 
 
@@ -441,10 +661,78 @@ static inline void exec_pwm_drive(void)
 }
 
 
+static inline void exec_ramp(void)
+{
+	char *ramp_str = NEXT_STRING();
+
+	if(ramp_str != NULL)
+	{
+		set_ramp(atoi(ramp_str));
+		json_respond_ok(empty_string, id_short);
+	}
+	else
+	{
+		json_respond_error(argument_error, id_short);
+	}
+}
+
+
 static inline void exec_reset(void)
 {
 	CCP = CCP_IOREG_gc;
 	RST.CTRL = RST_SWRST_bm;
+}
+
+
+static inline void exec_reset_servos(void)
+{
+	init_servo_parallax();
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_right_close(void)
+{
+	parallax_set_angle(SERVO_RIGHT_GRIP_CHANNEL, SERVO_RIGHT_GRIP_CLOSE, SERVO_GRIP_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_right_down(void)
+{
+	parallax_set_angle(SERVO_RIGHT_ARM_CHANNEL, SERVO_RIGHT_ARM_DOWN, SERVO_ARM_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_right_drop(void)
+{
+	parallax_set_angle(SERVO_RIGHT_ARM_CHANNEL, SERVO_RIGHT_ARM_DOWN, SERVO_ARM_RAMP);
+	parallax_set_angle(SERVO_RIGHT_GRIP_CHANNEL, SERVO_RIGHT_GRIP_OPEN, SERVO_GRIP_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_right_grab(void)
+{
+	parallax_set_angle(SERVO_RIGHT_GRIP_CHANNEL, SERVO_RIGHT_GRIP_CLOSE, SERVO_GRIP_RAMP);
+	for(ms_timer=0; ms_timer<SERVO_CLOSE_TIME;);	// wait for arm to close
+	parallax_set_angle(SERVO_RIGHT_ARM_CHANNEL, SERVO_RIGHT_ARM_UP, SERVO_ARM_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_right_open(void)
+{
+	parallax_set_angle(SERVO_RIGHT_GRIP_CHANNEL, SERVO_RIGHT_GRIP_OPEN, SERVO_GRIP_RAMP);
+	json_respond_ok(empty_string, id_short);
+}
+
+
+static inline void exec_right_up(void)
+{
+	parallax_set_angle(SERVO_RIGHT_ARM_CHANNEL, SERVO_RIGHT_ARM_UP, SERVO_ARM_RAMP);
+	json_respond_ok(empty_string, id_short);
 }
 
 
@@ -852,14 +1140,38 @@ static inline void parse_command(void)
 
 	switch(command)
 	{
+	case TOKEN_COMPASS_DUMP_EEPROM:
+		exec_compass_dump_eeprom();
+		break;
+	case TOKEN_COMPASS_FLAT:
+		exec_compass_flat();
+		break;
+	case TOKEN_COMPASS_RAMP:
+		exec_compass_ramp();
+		break;
+	case TOKEN_COMPASS_READ_EEPROM:
+		exec_compass_read_eeprom();
+		break;
+	case TOKEN_COMPASS_READ_RAM:
+		exec_compass_read_ram();
+		break;
 	case TOKEN_COMPASS_START_CALIBRATION:
 		exec_compass_start_calibration();
 		break;
 	case TOKEN_COMPASS_STOP_CALIBRATION:
 		exec_compass_stop_calibration();
 		break;
+	case TOKEN_COMPASS_WRITE_EEPROM:
+		exec_compass_write_eeprom();
+		break;
+	case TOKEN_COMPASS_WRITE_RAM:
+		exec_compass_write_ram();
+		break;
 	case TOKEN_HEADING:
 		exec_heading();
+		break;
+	case TOKEN_HEADING_ACCURACY:
+		exec_heading_accuracy();
 		break;
 	case TOKEN_HEADING_PID:
 		exec_heading_pid();
@@ -869,6 +1181,24 @@ static inline void parse_command(void)
 		break;
 	case TOKEN_INTERACTIVE:
 		exec_interactive();
+		break;
+	case TOKEN_LEFT_CLOSE:
+		exec_left_close();
+		break;
+	case TOKEN_LEFT_DOWN:
+		exec_left_down();
+		break;
+	case TOKEN_LEFT_DROP:
+		exec_left_drop();
+		break;
+	case TOKEN_LEFT_GRAB:
+		exec_left_grab();
+		break;
+	case TOKEN_LEFT_OPEN:
+		exec_left_open();
+		break;
+	case TOKEN_LEFT_UP:
+		exec_left_up();
 		break;
 	case TOKEN_MOTOR_PID:
 		exec_motor_pid();
@@ -887,6 +1217,30 @@ static inline void parse_command(void)
 		break;
 	case TOKEN_RESET:
 		exec_reset();
+		break;
+	case TOKEN_RESET_SERVOS:
+		exec_reset_servos();
+		break;
+	case TOKEN_RAMP:
+		exec_ramp();
+		break;
+	case TOKEN_RIGHT_CLOSE:
+		exec_right_close();
+		break;
+	case TOKEN_RIGHT_DOWN:
+		exec_right_down();
+		break;
+	case TOKEN_RIGHT_DROP:
+		exec_right_drop();
+		break;
+	case TOKEN_RIGHT_GRAB:
+		exec_right_grab();
+		break;
+	case TOKEN_RIGHT_OPEN:
+		exec_right_open();
+		break;
+	case TOKEN_RIGHT_UP:
+		exec_right_up();
 		break;
 	case TOKEN_S:
 		exec_sensors();
