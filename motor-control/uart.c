@@ -15,7 +15,9 @@
 #include "debug.h"
 #include "uart.h"
 
-uart_t debug_uart, pandaboard_uart, servo_uart;
+uart_t debug_uart;
+//uart_t pandaboard_uart;
+uart_t servo_uart;
 
 
 void init_uart(uart_t *u, USART_t *usart, uint16_t bsel, int8_t bscale)
@@ -74,7 +76,7 @@ void init_uarts()
 	init_uart(&debug_uart, &DEBUG_USART, 3301, -5);				// 19200 baud at 32 MHz clock
 //	init_uart(&debug_uart, &DEBUG_USART, 3317, -4);				// 9600 baud at 32 MHz clock
 
-	init_uart(&pandaboard_uart, &PANDABOARD_USART, 2094, -7);
+//	init_uart(&pandaboard_uart, &PANDABOARD_USART, 2094, -7);
 	init_uart(&servo_uart, &SERVO_USART, 3329, -2);				// 2400 baud at 32 MHz clock
 
 	// Connect stdin, stdout, and stderr to the UART
@@ -179,16 +181,16 @@ ISR(DEBUG_USART_RXC_VECT)
 }
 
 
-ISR(PANDABOARD_USART_DRE_VECT)
-{
-	dre_interrupt_handler(&pandaboard_uart);
-}
+//ISR(PANDABOARD_USART_DRE_VECT)
+//{
+//	dre_interrupt_handler(&pandaboard_uart);
+//}
 
 
-ISR(PANDABOARD_USART_RXC_VECT)
-{
-	rxc_interrupt_handler(&pandaboard_uart);
-}
+//ISR(PANDABOARD_USART_RXC_VECT)
+//{
+//	rxc_interrupt_handler(&pandaboard_uart);
+//}
 
 ISR(SERVO_USART_DRE_VECT)
 {
