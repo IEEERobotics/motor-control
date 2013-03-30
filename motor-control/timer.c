@@ -62,7 +62,7 @@ void init_enc_timer(TC1_t *timer, TC_EVSEL_t event_channel)
 //	timer->INTCTRLB = TC_CCAINTLVL_HI_gc;
 //	timer->INTCTRLA = TC_OVFINTLVL_HI_gc;
 	timer->PERBUF = 0xffff;
-	timer->CCABUF = 0;
+//	timer->CCA = 0;
 
 //	PMIC.CTRL |= PMIC_HILVLEN_bm;
 }
