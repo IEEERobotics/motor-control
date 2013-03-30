@@ -11,7 +11,8 @@
 #include <avr/io.h>
 #include <stdbool.h>
 
-#define COMPASS_TWI_ADDRESS				(0x42 >> 1)
+#define COMPASS_RAMP_TWI_ADDRESS		(0x42 >> 1)
+#define COMPASS_FLAT_TWI_ADDRESS		(0x40 >> 1)
 
 // Compass command bytes
 #define COMPASS_WRITE_EEPROM			'w'
@@ -46,7 +47,7 @@
 #define COMPASS_OPMODE_FREQ_5HZ			(1<<5)
 #define COMPASS_OPMODE_FREQ_10HZ		(2<<5)
 #define COMPASS_OPMODE_FREQ_20HZ		(3<<5)
-#define COMPASS_OPMODE_PER_SR_			(1<<4)	// Enable periodic set/reset
+#define COMPASS_OPMODE_PER_SR			(1<<4)	// Enable periodic set/reset
 #define COMPASS_OPMODE_STANDBY			(0<<0)	// Wait for 'A' command (default)
 #define COMPASS_OPMODE_QUERY			(1<<0)	// Perform measurement after each read
 #define COMPASS_OPMODE_CONTINUOUS		(2<<0)	// Perform measurement at regular intervals
@@ -57,6 +58,11 @@
 #define COMPASS_OUTMODE_RAWY			2
 #define COMPASS_OUTMODE_X				3
 #define COMPASS_OUTMODE_Y				4
+
+typedef enum compass {
+	COMPASS_FLAT,
+	COMPASS_RAMP
+} compass_t;
 
 void init_compass(void);
 bool compass_write_eeprom(uint8_t address, uint8_t data);
@@ -71,6 +77,7 @@ bool compass_exit_calibration_mode(void);
 bool compass_save_opmode(void);
 bool compass_get_data(uint16_t *data);
 bool compass_read(uint16_t *data);
+void compass_set(compass_t compass);
 
 
 #endif /* COMPASS_H_ */

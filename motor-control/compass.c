@@ -14,6 +14,20 @@
 #include "debug.h"
 #include "compass.h"
 
+uint8_t current_compass_addr = COMPASS_FLAT_TWI_ADDRESS;
+
+
+static inline void init_single_compass(void)
+{
+	/* Initialize compass state. Consider adding a timeout so we don't get stuck here. */
+	while(! compass_wakeup());
+	// Continuous mode, 20Hz update frequency
+	while(! compass_write_ram(COMPASS_RAM_OPMODE,
+			COMPASS_OPMODE_FREQ_20HZ | COMPASS_OPMODE_CONTINUOUS));
+	while(! compass_update_bridge_offsets());
+	while(! compass_write_eeprom(COMPASS_EEPROM_NUM_MEASUREMENTS, 16));
+}
+
 
 /**
  * Initialize compass module.
@@ -22,11 +36,10 @@ void init_compass(void)
 {
 	DEBUG_STATUS(DEBUG_INIT_COMPASS);
 
-	/* Initialize compass state. Consider adding a timeout so we don't get stuck here. */
-	while(! compass_wakeup());
-	// Continuous mode, 20Hz update frequency
-	while(! compass_write_ram(COMPASS_RAM_OPMODE,
-			COMPASS_OPMODE_FREQ_20HZ | COMPASS_OPMODE_CONTINUOUS));
+//	compass_set(COMPASS_RAMP);
+//	init_single_compass();
+	compass_set(COMPASS_FLAT);
+	init_single_compass();
 
 	DEBUG_CLEAR_STATUS();
 }
@@ -46,7 +59,7 @@ static inline bool send_receive(uint8_t rx_bytes,
 						 	 	uint8_t *rx_data,
 						 	 	uint8_t *tx_data)
 {
-	return i2c_send_receive(COMPASS_TWI_ADDRESS,
+	return i2c_send_receive(current_compass_addr,
 							rx_bytes,
 							tx_bytes,
 							rx_data,
@@ -76,7 +89,12 @@ bool compass_write_eeprom(uint8_t address, uint8_t data)
 bool compass_read_eeprom(uint8_t address, uint8_t *data)
 {
 	uint8_t tx_data[] = {COMPASS_READ_EEPROM, address};
-	return send_receive(0, sizeof(tx_data), data, tx_data);
+	bool send, receive;
+
+	send = send_receive(0, sizeof(tx_data), NULL, tx_data);
+	receive = send_receive(1, 0, data, NULL);
+
+	return send && receive;
 }
 
 
@@ -102,7 +120,12 @@ bool compass_write_ram(uint8_t address, uint8_t data)
 bool compass_read_ram(uint8_t address, uint8_t *data)
 {
 	uint8_t tx_data[] = {COMPASS_READ_RAM, address};
-	return send_receive(0, sizeof(tx_data), data, tx_data);
+	bool send, receive;
+
+	send = send_receive(0, sizeof(tx_data), NULL, tx_data);
+	receive = send_receive(1, 0, data, NULL);
+
+	return send && receive;
 }
 
 
@@ -200,3 +223,16 @@ bool compass_read(uint16_t *data)
 	return result;
 }
 
+
+void compass_set(compass_t compass)
+{
+	switch(compass)
+	{
+	case COMPASS_FLAT:
+		current_compass_addr = COMPASS_FLAT_TWI_ADDRESS;
+		break;
+	case COMPASS_RAMP:
+		current_compass_addr = COMPASS_RAMP_TWI_ADDRESS;
+		break;
+	}
+}
