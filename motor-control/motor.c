@@ -212,11 +212,11 @@ void update_speed(motor_t *motor)
 			*(motor->reg.pwma) = 0;
 			*(motor->reg.pwmb) = 0;
 			break;
-		case DIR_FORWARD:
+		case DIR_REVERSE:
 			*(motor->reg.pwma) = motor->response.pwm;
 			*(motor->reg.pwmb) = 0;
 			break;
-		case DIR_REVERSE:
+		case DIR_FORWARD:
 			*(motor->reg.pwma) = 0;
 			*(motor->reg.pwmb) = motor->response.pwm;
 			break;
