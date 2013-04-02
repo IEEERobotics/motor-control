@@ -43,6 +43,7 @@ const char *delimiters = " \r\n";
 const char *tokens[] = { "a",
 					   	 "b",
 					   	 "c",
+					   	 "compass_calibrate",
 					   	 "compass_dump_eeprom",
 					   	 "compass_flat",
 					   	 "compass_ramp",
@@ -202,7 +203,26 @@ static inline motor_t *get_motor(token_t token)
 }
 
 
-static inline void exec_compass_dump_eeprom()
+static inline void exec_compass_calibrate(void)
+{
+	bool enabled = pid_is_enabled();
+
+	if(enabled) pid_disable();
+
+	while(! compass_write_ram(COMPASS_RAM_OPMODE, COMPASS_OPMODE_STANDBY));
+	while(! compass_enter_calibration_mode());
+
+	for(ms_timer = 0; ms_timer < (20000/MS_TIMER_PER););	// Delay 20 s
+
+	while(! compass_exit_calibration_mode());
+	while(! compass_save_opmode());
+	init_compass();
+
+	if(enabled) pid_enable();
+}
+
+
+static inline void exec_compass_dump_eeprom(void)
 {
 	int i;
 	uint8_t eeprom[9];
@@ -233,21 +253,21 @@ static inline void exec_compass_dump_eeprom()
 }
 
 
-static inline void exec_compass_flat()
+static inline void exec_compass_flat(void)
 {
 	compass_set(COMPASS_FLAT);
 	json_respond_ok(empty_string, id_short);
 }
 
 
-static inline void exec_compass_ramp()
+static inline void exec_compass_ramp(void)
 {
 	compass_set(COMPASS_RAMP);
 	json_respond_ok(empty_string, id_short);
 }
 
 
-static inline void exec_compass_read_eeprom()
+static inline void exec_compass_read_eeprom(void)
 {
 	char *address_str = NEXT_STRING();
 	uint8_t address;
@@ -269,7 +289,7 @@ static inline void exec_compass_read_eeprom()
 }
 
 
-static inline void exec_compass_read_ram()
+static inline void exec_compass_read_ram(void)
 {
 	char *address_str = NEXT_STRING();
 	uint8_t address;
@@ -291,21 +311,21 @@ static inline void exec_compass_read_ram()
 }
 
 
-static inline void exec_compass_start_calibration()
+static inline void exec_compass_start_calibration(void)
 {
 	while(! compass_enter_calibration_mode());
 	json_respond_ok(empty_string, id_short);
 }
 
 
-static inline void exec_compass_stop_calibration()
+static inline void exec_compass_stop_calibration(void)
 {
 	while(! compass_exit_calibration_mode());
 	json_respond_ok(empty_string, id_short);
 }
 
 
-static inline void exec_compass_write_eeprom()
+static inline void exec_compass_write_eeprom(void)
 {
 	char *address_str = NEXT_STRING();
 	char *data_str = NEXT_STRING();
@@ -329,7 +349,7 @@ static inline void exec_compass_write_eeprom()
 }
 
 
-static inline void exec_compass_write_ram()
+static inline void exec_compass_write_ram(void)
 {
 	char *address_str = NEXT_STRING();
 	char *data_str = NEXT_STRING();
@@ -1140,6 +1160,9 @@ static inline void parse_command(void)
 
 	switch(command)
 	{
+	case TOKEN_COMPASS_CALIBRATE:
+		exec_compass_calibrate();
+		break;
 	case TOKEN_COMPASS_DUMP_EEPROM:
 		exec_compass_dump_eeprom();
 		break;
