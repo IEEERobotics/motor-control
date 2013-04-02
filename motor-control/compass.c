@@ -25,7 +25,7 @@ static inline void init_single_compass(void)
 	while(! compass_write_ram(COMPASS_RAM_OPMODE,
 			COMPASS_OPMODE_FREQ_20HZ | COMPASS_OPMODE_CONTINUOUS));
 	while(! compass_update_bridge_offsets());
-	while(! compass_write_eeprom(COMPASS_EEPROM_NUM_MEASUREMENTS, 16));
+	while(! compass_write_eeprom(COMPASS_EEPROM_NUM_MEASUREMENTS, 4));
 }
 
 
@@ -36,8 +36,8 @@ void init_compass(void)
 {
 	DEBUG_STATUS(DEBUG_INIT_COMPASS);
 
-//	compass_set(COMPASS_RAMP);
-//	init_single_compass();
+	compass_set(COMPASS_RAMP);
+	init_single_compass();
 	compass_set(COMPASS_FLAT);
 	init_single_compass();
 
