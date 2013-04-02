@@ -11,7 +11,7 @@
 #include "debug.h"
 #include "timer.h"
 
-volatile uint8_t ms_timer = 0;
+volatile uint16_t ms_timer = 0;
 
 /**
  * Initializes a PWM timer
