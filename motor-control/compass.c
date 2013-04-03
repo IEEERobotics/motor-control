@@ -12,10 +12,11 @@
 #include "clock.h"
 #include "i2c.h"
 #include "debug.h"
+#include "timer.h"
 #include "compass.h"
 
 uint8_t current_compass_addr = COMPASS_FLAT_TWI_ADDRESS;
-
+uint16_t compass_north = 0;
 
 static inline void init_single_compass(void)
 {
@@ -40,6 +41,9 @@ void init_compass(void)
 	init_single_compass();
 	compass_set(COMPASS_FLAT);
 	init_single_compass();
+
+//	for(ms_timer = 0; ms_timer < (40/MS_TIMER_PER););	// Wait for compass to stabilize
+	while(! compass_read(&compass_north));
 
 	DEBUG_CLEAR_STATUS();
 }
@@ -235,4 +239,22 @@ void compass_set(compass_t compass)
 		current_compass_addr = COMPASS_RAMP_TWI_ADDRESS;
 		break;
 	}
+}
+
+
+int compass_get_bearing(void)
+{
+	uint16_t abs_heading;
+	int bearing;
+
+	while(! compass_read(&abs_heading));
+	bearing = abs_heading - compass_north;
+
+	if(current_compass_addr == COMPASS_RAMP_TWI_ADDRESS)
+		bearing -= 1800;
+
+	while(bearing < 0)
+		bearing += 3600;
+
+	return bearing;
 }

@@ -49,6 +49,7 @@ const char *tokens[] = { "a",
 					   	 "compass_ramp",
 					   	 "compass_read_eeprom",
 					   	 "compass_read_ram",
+					   	 "compass_reset",
 					   	 "compass_start_calibration",
 					   	 "compass_stop_calibration",
 					   	 "compass_write_eeprom",
@@ -209,7 +210,7 @@ static inline void exec_compass_calibrate(void)
 
 	if(enabled) pid_disable();
 
-	while(! compass_write_ram(COMPASS_RAM_OPMODE, COMPASS_OPMODE_STANDBY));
+//	while(! compass_write_ram(COMPASS_RAM_OPMODE, COMPASS_OPMODE_STANDBY));
 	while(! compass_enter_calibration_mode());
 
 	for(ms_timer = 0; ms_timer < (20000/MS_TIMER_PER););	// Delay 20 s
@@ -311,6 +312,13 @@ static inline void exec_compass_read_ram(void)
 }
 
 
+static inline void exec_compass_reset(void)
+{
+	init_compass();
+	json_respond_ok(empty_string, id_short);
+}
+
+
 static inline void exec_compass_start_calibration(void)
 {
 	while(! compass_enter_calibration_mode());
@@ -375,9 +383,7 @@ static inline void exec_compass_write_ram(void)
 
 static inline void exec_heading(void)
 {
-	uint16_t heading;
-
-	while(! compass_read(&heading));
+	uint16_t heading = compass_get_bearing();
 
 	json_start_response(true, "deprecated, use 'sensors' instead", id_short);
 	json_add_int("data", heading);
@@ -767,7 +773,7 @@ static inline void exec_sensor(void)
 		switch(atoi(id_str))
 		{
 		case SENSOR_COMPASS:
-			while(! compass_read((uint16_t *) &data));
+			data = compass_get_bearing();
 			break;
 		case SENSOR_ACCEL_X:
 			accelerometer_get_data(&a);
@@ -812,7 +818,7 @@ static inline void exec_sensor(void)
 
 static inline void exec_sensors(void)
 {
-	uint16_t heading;
+	int heading;
 	accelerometer_data_t a;
 	json_kv_t us_array[4];
 	json_kv_t accel_array[3];
@@ -833,7 +839,7 @@ static inline void exec_sensors(void)
 	us_array[3].key = "back";
 	us_array[3].value = get_ultrasonic_distance(ULTRASONIC_BACK);
 
-	while(! compass_read(&heading));
+	heading = compass_get_bearing();
 	while(! accelerometer_get_data(&a));
 
 	json_start_response(true, empty_string, id_short);
@@ -1177,6 +1183,9 @@ static inline void parse_command(void)
 		break;
 	case TOKEN_COMPASS_READ_RAM:
 		exec_compass_read_ram();
+		break;
+	case TOKEN_COMPASS_RESET:
+		exec_compass_reset();
 		break;
 	case TOKEN_COMPASS_START_CALIBRATION:
 		exec_compass_start_calibration();

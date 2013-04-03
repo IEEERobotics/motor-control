@@ -244,7 +244,7 @@ static inline void print_json_response(int heading, int heading_error)
  */
 void compute_next_pid_iteration(void)
 {
-	uint16_t current_heading;	// Current absolute heading
+	int current_heading;	// Current absolute heading
 	int heading_error;			// Error in heading
 	int heading_mv;				// Heading manipulated variable (output of heading PID)
 	int left_setpoint;
@@ -254,12 +254,12 @@ void compute_next_pid_iteration(void)
 	right_setpoint = get_motor_setpoint(&MOTOR_RIGHT);
 
 #ifndef PID_IGNORE_HEADING
-	while(! compass_read(&current_heading));	// Get current heading, run again if error
+	current_heading = compass_get_bearing();
 	heading_error = normalize_heading(heading_setpoint - current_heading);
 
 	if(abs(heading_error) > heading_deadband)
 	{
-		heading_mv = compute_pid(&heading_pid, heading_error) / 1;
+		heading_mv = compute_pid(&heading_pid, heading_error) / 10;
 		right_setpoint -= heading_mv;
 		left_setpoint += heading_mv;
 	}
@@ -297,6 +297,9 @@ void compute_next_pid_iteration(void)
 		{
 			print_json_response(current_heading, heading_error);
 			json_response_sent = true;
+			pid_enabled = false;
+			change_pwm(&MOTOR_LEFT, 0);
+			change_pwm(&MOTOR_RIGHT, 0);
 		}
 	}
 
@@ -350,13 +353,13 @@ void change_setpoint(int heading_sp,
 {
 	pid_enabled = false;
 
-	uint16_t current_heading;
+	int current_heading;
 	int new_heading_setpoint;
 
 	/* Calculate absolute heading, add or subtract 360 degrees if necessary */
 	if(heading_is_relative)
 	{
-		while(! compass_read(&current_heading));	// Get current heading, run again if error
+		current_heading = compass_get_bearing();
 		new_heading_setpoint = normalize_heading(heading_sp + current_heading);
 	}
 	else
@@ -388,12 +391,12 @@ void change_setpoint(int heading_sp,
 
 void change_heading(int heading_sp, bool is_relative)
 {
-	uint16_t current_heading;
+	int current_heading;
 	int new_heading_setpoint;
 
 	if(is_relative)
 	{
-		while(! compass_read(&current_heading));
+		current_heading = compass_get_bearing();
 		new_heading_setpoint = normalize_heading(heading_sp + current_heading);
 	}
 	else

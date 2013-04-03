@@ -78,6 +78,8 @@ bool compass_save_opmode(void);
 bool compass_get_data(uint16_t *data);
 bool compass_read(uint16_t *data);
 void compass_set(compass_t compass);
+int compass_get_bearing(void);
 
+extern uint16_t compass_north;
 
 #endif /* COMPASS_H_ */
